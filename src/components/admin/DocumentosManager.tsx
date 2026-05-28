@@ -283,6 +283,7 @@ export function DocumentosManager({
         </h2>
         <DocumentosFolderTree
           categorias={categorias}
+          storage={storage}
           onMutated={loadCategorias}
         />
       </section>
