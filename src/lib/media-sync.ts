@@ -1,5 +1,5 @@
 import type { MediaOrigen, MediaTipo, Prisma } from "@prisma/client";
-import { inferMediaTipo } from "@/lib/uploads";
+import { inferMediaTipo } from "@/lib/file-utils";
 
 export type MediaSyncItem = {
   url: string;

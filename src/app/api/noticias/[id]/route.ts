@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
+import { deleteNoticiaWithAssets } from "@/lib/noticia-delete";
 import { handleUploadRouteError } from "@/lib/api-errors";
 import { syncMediaFromNoticia, type MediaSyncItem } from "@/lib/media-sync";
 import { assertStorageQuota } from "@/lib/storage";
@@ -122,9 +123,16 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
 
   try {
-    await prisma.noticia.delete({ where: { id } });
+    const deleted = await deleteNoticiaWithAssets(id);
+    if (!deleted) {
+      return NextResponse.json({ error: "Noticia no encontrada" }, { status: 404 });
+    }
+
     revalidatePath("/admin/noticias");
+    revalidatePath("/admin/galeria");
     revalidatePath("/noticias");
+    revalidatePath("/galeria");
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

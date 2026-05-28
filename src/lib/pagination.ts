@@ -28,6 +28,24 @@ export function parsePaginationParams(
   return { page, limit, skip };
 }
 
+export function buildPaginationHref(
+  basePath: string,
+  page: number,
+  limit: number,
+  extra?: Record<string, string | undefined>
+): string {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  if (limit !== DEFAULT_PAGE_LIMIT) params.set("limit", String(limit));
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value) params.set(key, value);
+    }
+  }
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
+}
+
 export function buildPaginationMeta(
   total: number,
   page: number,

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, Download } from "lucide-react";
 import { NAV_ICONS } from "@/lib/nav-icons";
-import { formatFileSize } from "@/lib/uploads";
+import { formatFileSize } from "@/lib/file-utils";
 import type { CategoriaDocumento, Documento } from "@prisma/client";
 import { cn } from "@/lib/utils";
 

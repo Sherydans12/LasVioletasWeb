@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, Folder, Trash2 } from "lucide-react";
 import type { CategoriaDocumento, Documento } from "@prisma/client";
 import { deleteDocumento } from "@/app/admin/documentos/actions";
-import { formatFileSize } from "@/lib/uploads";
+import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
+import { formatFileSize } from "@/lib/file-utils";
 import { cn } from "@/lib/utils";
 
 type CategoriaWithDocs = CategoriaDocumento & {
@@ -30,6 +31,7 @@ export function DocumentosFolderTree({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<Documento | null>(null);
   const [, startTransition] = useTransition();
 
   function toggleFolder(id: string) {
@@ -41,24 +43,19 @@ export function DocumentosFolderTree({
     });
   }
 
-  async function onDeleteDoc(id: string, nombre: string) {
-    if (
-      !window.confirm(
-        `¿Eliminar "${nombre}" del servidor? Esta acción no se puede deshacer.`
-      )
-    ) {
-      return;
-    }
+  async function handleConfirmDelete() {
+    if (!confirmTarget) return;
 
-    setPendingId(id);
+    setPendingId(confirmTarget.id);
     setError(null);
-    const result = await deleteDocumento(id);
+    const result = await deleteDocumento(confirmTarget.id);
     if (!result.ok) {
       setError(result.error);
       setPendingId(null);
       return;
     }
 
+    setConfirmTarget(null);
     startTransition(() => {
       router.refresh();
       setPendingId(null);
@@ -80,6 +77,22 @@ export function DocumentosFolderTree({
           {error}
         </p>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !pendingId) setConfirmTarget(null);
+        }}
+        title="¿Eliminar este documento?"
+        description={
+          confirmTarget
+            ? `Se borrará "${confirmTarget.nombre}" del disco y de la carpeta. Esta acción no se puede deshacer.`
+            : ""
+        }
+        loading={pendingId !== null}
+        onConfirm={handleConfirmDelete}
+      />
+
       <ul className="space-y-2">
         {categorias.map((cat) => {
           const count = cat.documentos.length;
@@ -137,7 +150,7 @@ export function DocumentosFolderTree({
                         <button
                           type="button"
                           disabled={deleting}
-                          onClick={() => void onDeleteDoc(doc.id, doc.nombre)}
+                          onClick={() => setConfirmTarget(doc)}
                           aria-label={`Eliminar ${doc.nombre}`}
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg hover:bg-destructive/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold disabled:opacity-40"
                         >

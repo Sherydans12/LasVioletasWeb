@@ -1,32 +1,34 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { PaginationMeta } from "@/lib/pagination";
+import { buildPaginationHref, type PaginationMeta } from "@/lib/pagination";
 
 type PaginationNavProps = {
   basePath: string;
   meta: PaginationMeta;
   className?: string;
+  /** Parámetros extra de la URL a preservar (ej. `q`, `type`). */
+  query?: Record<string, string | undefined>;
 };
 
-function pageHref(basePath: string, page: number, limit: number) {
-  const params = new URLSearchParams();
-  params.set("page", String(page));
-  if (limit !== 12) params.set("limit", String(limit));
-  const qs = params.toString();
-  return qs ? `${basePath}?${qs}` : basePath;
-}
-
-export function PaginationNav({ basePath, meta, className }: PaginationNavProps) {
+export function PaginationNav({
+  basePath,
+  meta,
+  className,
+  query,
+}: PaginationNavProps) {
   if (meta.totalPages <= 1) return null;
 
   return (
     <nav
       aria-label="Paginación"
-      className={cn("flex flex-wrap items-center justify-center gap-4 mt-10", className)}
+      className={cn(
+        "flex flex-wrap items-center justify-center gap-4 mt-10",
+        className
+      )}
     >
       {meta.hasPrev ? (
         <Link
-          href={pageHref(basePath, meta.page - 1, meta.limit)}
+          href={buildPaginationHref(basePath, meta.page - 1, meta.limit, query)}
           className="px-4 py-2 rounded-lg border border-school-violet/20 text-sm font-medium text-school-violet hover:bg-school-violet/5 transition-colors"
         >
           ← Anterior
@@ -44,7 +46,7 @@ export function PaginationNav({ basePath, meta, className }: PaginationNavProps)
 
       {meta.hasNext ? (
         <Link
-          href={pageHref(basePath, meta.page + 1, meta.limit)}
+          href={buildPaginationHref(basePath, meta.page + 1, meta.limit, query)}
           className="px-4 py-2 rounded-lg border border-school-violet/20 text-sm font-medium text-school-violet hover:bg-school-violet/5 transition-colors"
         >
           Siguiente →

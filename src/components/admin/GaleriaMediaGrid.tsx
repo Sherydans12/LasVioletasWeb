@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, Trash2 } from "lucide-react";
 import type { Media } from "@prisma/client";
 import { deleteMedia } from "@/app/admin/galeria/actions";
+import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
 import { MediaPreviewLightbox } from "@/components/admin/MediaPreviewLightbox";
 import { cn } from "@/lib/utils";
 
@@ -19,27 +20,23 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Media | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<Media | null>(null);
   const [, startTransition] = useTransition();
 
-  async function onDelete(id: string) {
-    if (
-      !window.confirm(
-        "¿Eliminar este recurso de la galería? Se borrará el archivo del servidor."
-      )
-    ) {
-      return;
-    }
+  async function handleConfirmDelete() {
+    if (!confirmTarget) return;
 
-    setPendingId(id);
+    setPendingId(confirmTarget.id);
     setError(null);
 
-    const result = await deleteMedia(id);
+    const result = await deleteMedia(confirmTarget.id);
     if (!result.ok) {
       setError(result.error);
       setPendingId(null);
       return;
     }
 
+    setConfirmTarget(null);
     startTransition(() => {
       router.refresh();
       setPendingId(null);
@@ -49,7 +46,7 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-8 text-center">
-        Aún no hay recursos en la galería. Sube el primero arriba.
+        No hay recursos que coincidan con los filtros aplicados.
       </p>
     );
   }
@@ -61,6 +58,21 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
           {error}
         </p>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !pendingId) setConfirmTarget(null);
+        }}
+        title="¿Eliminar este recurso?"
+        description={
+          confirmTarget
+            ? `Se borrará "${displayNameFromUrl(confirmTarget.url)}" del disco y de la biblioteca de medios. Esta acción no se puede deshacer.`
+            : ""
+        }
+        loading={pendingId !== null}
+        onConfirm={handleConfirmDelete}
+      />
 
       <MediaPreviewLightbox
         item={previewItem}
@@ -128,7 +140,7 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    void onDelete(item.id);
+                    setConfirmTarget(item);
                   }}
                   disabled={deleting}
                   aria-label={`Eliminar ${label}`}

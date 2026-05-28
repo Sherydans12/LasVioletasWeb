@@ -93,10 +93,7 @@ function validateFile(file: File, category: UploadCategory) {
   }
 }
 
-export function inferMediaTipo(filename: string): "image" | "video" {
-  const ext = path.extname(filename).toLowerCase();
-  return ext === ".mp4" ? "video" : "image";
-}
+export { inferMediaTipo, formatFileSize } from "@/lib/file-utils";
 
 export async function saveUpload(
   file: File,
@@ -126,9 +123,3 @@ export async function saveUpload(
   };
 }
 
-export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 ** 3) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
-}

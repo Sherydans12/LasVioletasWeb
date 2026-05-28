@@ -1,26 +1,45 @@
+import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { GaleriaFiltersToolbar } from "@/components/admin/GaleriaFiltersToolbar";
 import { GaleriaForm } from "@/components/admin/GaleriaForm";
 import { GaleriaMediaGrid } from "@/components/admin/GaleriaMediaGrid";
 import { PaginationNav } from "@/components/shared/PaginationNav";
+import { buildMediaAdminWhere } from "@/lib/galeria-filters";
 import { parsePaginationParams, buildPaginationMeta } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ page?: string; limit?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    limit?: string;
+    q?: string;
+    type?: string;
+  }>;
 };
 
 export default async function AdminGaleriaPage({ searchParams }: PageProps) {
-  const pagination = parsePaginationParams(await searchParams);
+  const resolved = await searchParams;
+  const pagination = parsePaginationParams(resolved);
+  const where = buildMediaAdminWhere(resolved.q, resolved.type);
+
+  const filterQuery: Record<string, string | undefined> = {
+    q: resolved.q?.trim() || undefined,
+    type:
+      resolved.type === "image" || resolved.type === "video"
+        ? resolved.type
+        : undefined,
+  };
 
   let media: Awaited<ReturnType<typeof prisma.media.findMany>> = [];
   let meta = buildPaginationMeta(0, pagination.page, pagination.limit);
 
   try {
     const [total, items] = await Promise.all([
-      prisma.media.count(),
+      prisma.media.count({ where }),
       prisma.media.findMany({
+        where,
         orderBy: { fecha: "desc" },
         skip: pagination.skip,
         take: pagination.limit,
@@ -57,8 +76,20 @@ export default async function AdminGaleriaPage({ searchParams }: PageProps) {
           </p>
         </div>
 
+        <Suspense
+          fallback={
+            <div className="h-10 rounded-lg bg-school-neutral animate-pulse" />
+          }
+        >
+          <GaleriaFiltersToolbar />
+        </Suspense>
+
         <GaleriaMediaGrid items={media} />
-        <PaginationNav basePath="/admin/galeria" meta={meta} />
+        <PaginationNav
+          basePath="/admin/galeria"
+          meta={meta}
+          query={filterQuery}
+        />
       </section>
     </AdminShell>
   );
