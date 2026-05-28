@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import { NAV_ICONS } from "@/lib/nav-icons";
 import { CONTACT } from "@/lib/contact";
+import { usePublicChromeVisible } from "@/contexts/public-chrome-suppress";
 import { useSiteHeaderScroll } from "@/contexts/site-header-scroll";
 
 const HEADER_MOTION = {
@@ -50,8 +51,11 @@ const ADDRESS_LINE = "Las Violetas 1159, Coquimbo";
  * `TOP_HEADER_OFFSET_PX` when this chrome is visible.
  */
 export function TopHeader() {
+  const showPublicChrome = usePublicChromeVisible();
   const { showTopHeaderChrome, isMdUp } = useSiteHeaderScroll();
   const visuallyOpen = isMdUp && showTopHeaderChrome;
+
+  if (!showPublicChrome) return null;
 
   return (
     <div

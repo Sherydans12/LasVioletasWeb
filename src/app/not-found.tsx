@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { NotFoundView } from "@/components/errors/NotFoundView";
+import { PublicChromeSuppressor } from "@/contexts/public-chrome-suppress";
 
 export const metadata: Metadata = {
   title: "Página no encontrada",
@@ -16,5 +17,9 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
-  return <NotFoundView />;
+  return (
+    <PublicChromeSuppressor>
+      <NotFoundView />
+    </PublicChromeSuppressor>
+  );
 }

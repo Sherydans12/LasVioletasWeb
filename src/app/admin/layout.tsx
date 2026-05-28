@@ -12,5 +12,7 @@ export default async function AdminRootLayout({
   if (!session?.user) {
     redirect(`${HIDDEN_LOGIN_PATH}?callbackUrl=/admin`);
   }
-  return children;
+  return (
+    <div className="min-h-screen w-full overflow-x-hidden">{children}</div>
+  );
 }

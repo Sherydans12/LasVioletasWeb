@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cinzel, Montserrat, Geist_Mono } from "next/font/google";
 import { OrganizationSchema } from "@/components/shared/OrganizationSchema";
+import { PublicChromeSuppressProvider } from "@/contexts/public-chrome-suppress";
 import { SiteHeaderScrollProvider } from "@/contexts/site-header-scroll";
 import { TopHeader } from "@/components/shared/TopHeader";
 import { SessionProvider } from "@/components/providers/SessionProvider";
@@ -128,10 +129,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <OrganizationSchema />
         <SessionProvider>
-          <SiteHeaderScrollProvider>
-            <TopHeader />
-            {children}
-          </SiteHeaderScrollProvider>
+          <PublicChromeSuppressProvider>
+            <SiteHeaderScrollProvider>
+              <TopHeader />
+              {children}
+            </SiteHeaderScrollProvider>
+          </PublicChromeSuppressProvider>
         </SessionProvider>
       </body>
     </html>

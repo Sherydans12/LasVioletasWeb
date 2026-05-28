@@ -7,12 +7,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { PUBLIC_NAV_ITEMS } from "@/lib/nav-config";
 import { getNavIconForHref } from "@/lib/nav-icons";
+import { usePublicChromeVisible } from "@/contexts/public-chrome-suppress";
 import {
   TOP_HEADER_OFFSET_PX,
   useSiteHeaderScroll,
 } from "@/contexts/site-header-scroll";
 
 export function Navbar() {
+  const showPublicChrome = usePublicChromeVisible();
   const { showTopHeaderChrome } = useSiteHeaderScroll();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,6 +25,8 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  if (!showPublicChrome) return null;
 
   return (
     <header
