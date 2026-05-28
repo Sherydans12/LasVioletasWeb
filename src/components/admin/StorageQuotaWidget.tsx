@@ -1,9 +1,10 @@
-import { getStorageStats } from "@/lib/storage";
+import { formatStorageUsedDisplay, getStorageStats } from "@/lib/storage";
 import { Progress } from "@/components/ui/progress";
 import { HardDrive } from "lucide-react";
 
 export async function StorageQuotaWidget() {
   const stats = await getStorageStats();
+  const usedDisplay = formatStorageUsedDisplay(stats);
   const isCritical = stats.percentUsed >= 90;
   const availablePercent = (100 - stats.percentUsed).toFixed(1);
 
@@ -35,10 +36,10 @@ export async function StorageQuotaWidget() {
             isCritical ? "text-destructive" : "text-foreground"
           }`}
         >
-          {stats.usedGb.toFixed(2)}
+          {usedDisplay.amount}
           <span className="text-sm font-normal text-muted-foreground">
             {" "}
-            / {stats.limitGb.toFixed(0)} GB
+            {usedDisplay.unit} / {stats.limitGb.toFixed(0)} GB
           </span>
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">espacio utilizado</p>

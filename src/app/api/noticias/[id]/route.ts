@@ -103,6 +103,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return updated;
     });
 
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/galeria");
     revalidatePath("/admin/noticias");
     revalidatePath(`/admin/noticias/${id}/edit`);
@@ -128,6 +129,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Noticia no encontrada" }, { status: 404 });
     }
 
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/noticias");
     revalidatePath("/admin/galeria");
     revalidatePath("/noticias");

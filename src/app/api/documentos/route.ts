@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       },
     });
 
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/documentos");
     revalidatePath("/documentos");
 

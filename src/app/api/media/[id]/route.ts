@@ -41,6 +41,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     await prisma.media.delete({ where: { id } });
     await deleteStoredFileByUrl(media.url);
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/galeria");
 
     return NextResponse.json({ ok: true });

@@ -80,6 +80,7 @@ export async function POST(request: Request) {
       return created;
     });
 
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/galeria");
     revalidatePath("/admin/noticias");
     revalidatePath("/galeria");

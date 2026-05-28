@@ -23,6 +23,7 @@ export async function deleteMedia(id: string): Promise<DeleteMediaResult> {
 
     await prisma.media.delete({ where: { id } });
     await deleteStoredFileByUrl(media.url);
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/galeria");
 
     return { ok: true };

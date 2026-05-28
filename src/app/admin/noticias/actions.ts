@@ -20,6 +20,7 @@ export async function deleteNoticia(id: string): Promise<DeleteNoticiaResult> {
       return { ok: false, error: "Noticia no encontrada" };
     }
 
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/noticias");
     revalidatePath("/admin/galeria");
     revalidatePath("/noticias");

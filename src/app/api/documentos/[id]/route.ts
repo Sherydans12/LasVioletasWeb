@@ -21,6 +21,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     await prisma.documento.delete({ where: { id } });
     await deleteStoredFileByUrl(documento.archivoUrl);
 
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/documentos");
     revalidatePath("/documentos");
 

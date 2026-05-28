@@ -63,3 +63,21 @@ export async function getStorageStats(): Promise<StorageStats> {
     percentUsed,
   };
 }
+
+/** Muestra MB cuando el uso es menor a 0.01 GB para evitar redondeos a 0.00 GB. */
+export function formatStorageUsedDisplay(stats: StorageStats): {
+  amount: string;
+  unit: "GB" | "MB";
+} {
+  if (stats.usedGb < 0.01) {
+    return {
+      amount: (stats.usedBytes / (1024 * 1024)).toFixed(2),
+      unit: "MB",
+    };
+  }
+
+  return {
+    amount: stats.usedGb.toFixed(2),
+    unit: "GB",
+  };
+}

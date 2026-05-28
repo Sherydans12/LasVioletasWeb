@@ -26,6 +26,7 @@ export async function deleteDocumento(
     await prisma.documento.delete({ where: { id } });
     await deleteStoredFileByUrl(documento.archivoUrl);
 
+    revalidatePath("/admin", "layout");
     revalidatePath("/admin/documentos");
     revalidatePath("/documentos");
 
