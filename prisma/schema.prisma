@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaTipo {
+  image
+  video
+}
+
+enum MediaOrigen {
+  directo
+  noticia
+}
+
+model Noticia {
+  id         String   @id @default(cuid())
+  titulo     String
+  contenido  String   @db.Text
+  fecha      DateTime @default(now())
+  portadaUrl String?
+  imagenes   String[] @default([])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  media      Media[]
+
+  @@index([fecha(sort: Desc)])
+}
+
+model Media {
+  id          String      @id @default(cuid())
+  url         String
+  tipo        MediaTipo
+  origen      MediaOrigen
+  asociadoAId String?
+  destacado   Boolean     @default(false)
+  fecha       DateTime    @default(now())
+  noticia     Noticia?    @relation(fields: [asociadoAId], references: [id], onDelete: SetNull)
+
+  @@index([tipo])
+  @@index([destacado])
+  @@index([origen])
+  @@index([fecha(sort: Desc)])
+}
+
+model CategoriaDocumento {
+  id         String      @id @default(cuid())
+  nombre     String      @unique
+  orden      Int         @default(0)
+  createdAt  DateTime    @default(now())
+  documentos Documento[]
+}
+
+model Documento {
+  id          String             @id @default(cuid())
+  nombre      String
+  archivoUrl  String
+  categoriaId String
+  categoria   CategoriaDocumento @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  tamanoBytes Int                @default(0)
+  mimeType    String?
+  fecha       DateTime           @default(now())
+
+  @@index([categoriaId])
+  @@index([fecha(sort: Desc)])
+}

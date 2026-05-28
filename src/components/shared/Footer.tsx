@@ -3,11 +3,13 @@ import Link from "next/link";
 import { CONTACT } from "@/lib/contact";
 
 const FOOTER_LINKS = [
-  { label: "Nosotros", href: "#nosotros" },
-  { label: "Oferta Educativa", href: "#servicios" },
-  { label: "Matrícula 2026", href: "#admision" },
-  { label: "Instalaciones", href: "#instalaciones" },
-  { label: "Contacto", href: "#contacto" },
+  { label: "Nosotros", href: "/#nosotros" },
+  { label: "Actividades", href: "/noticias" },
+  { label: "Galería", href: "/galeria" },
+  { label: "Documentos", href: "/documentos" },
+  { label: "Oferta Educativa", href: "/#servicios" },
+  { label: "Matrícula 2026", href: "/#admision" },
+  { label: "Contacto", href: "/#contacto" },
 ];
 
 function InstagramIcon() {

@@ -7,6 +7,11 @@ import { Services } from "@/components/sections/Services";
 import { Infrastructure } from "@/components/sections/Infrastructure";
 import { MatriculaCTA } from "@/components/sections/MatriculaCTA";
 import { Contact } from "@/components/sections/Contact";
+import { LatestActivities } from "@/components/sections/LatestActivities";
+import { GalleryCarouselSection } from "@/components/sections/GalleryCarouselSection";
+
+/** Contenido dinámico (noticias, galería) desde PostgreSQL. */
+export const revalidate = 60;
 
 export default function HomePage() {
   return (
@@ -14,8 +19,10 @@ export default function HomePage() {
       <Navbar />
       <main id="main-content">
         <Hero />
+        <LatestActivities />
         <About />
         <Services />
+        <GalleryCarouselSection />
         <Infrastructure />
         <MatriculaCTA />
         <Contact />

@@ -3,6 +3,7 @@ import { Cinzel, Montserrat, Geist_Mono } from "next/font/google";
 import { OrganizationSchema } from "@/components/shared/OrganizationSchema";
 import { SiteHeaderScrollProvider } from "@/contexts/site-header-scroll";
 import { TopHeader } from "@/components/shared/TopHeader";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -126,10 +127,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <OrganizationSchema />
-        <SiteHeaderScrollProvider>
-          <TopHeader />
-          {children}
-        </SiteHeaderScrollProvider>
+        <SessionProvider>
+          <SiteHeaderScrollProvider>
+            <TopHeader />
+            {children}
+          </SiteHeaderScrollProvider>
+        </SessionProvider>
       </body>
     </html>
   );
