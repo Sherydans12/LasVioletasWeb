@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/admin/noticias", label: "Noticias" },
   { href: "/admin/galeria", label: "Galería" },
   { href: "/admin/documentos", label: "Documentos" },
+  { href: "/admin/perfil", label: "Mi perfil" },
 ];
 
 export function AdminShell({

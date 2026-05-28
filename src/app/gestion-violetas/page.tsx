@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { TurnstileField } from "@/components/shared/TurnstileField";
 
-function LoginForm() {
+function AccessForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/admin";
@@ -98,7 +98,10 @@ function LoginForm() {
         />
       </div>
 
-      <TurnstileField onToken={setTurnstileToken} onExpire={() => setTurnstileToken("")} />
+      <TurnstileField
+        onToken={setTurnstileToken}
+        onExpire={() => setTurnstileToken("")}
+      />
 
       {error && (
         <p className="text-sm text-destructive" role="alert">
@@ -123,11 +126,13 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+export default function HiddenAccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-school-neutral px-6 py-16">
-      <Suspense fallback={<div className="text-muted-foreground">Cargando…</div>}>
-        <LoginForm />
+      <Suspense
+        fallback={<div className="text-muted-foreground">Cargando…</div>}
+      >
+        <AccessForm />
       </Suspense>
     </div>
   );

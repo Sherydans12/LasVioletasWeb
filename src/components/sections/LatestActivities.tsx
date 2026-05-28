@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getLatestNoticias } from "@/lib/content";
+import { PLACEHOLDER_ACTIVITIES } from "@/lib/home-fallbacks";
 import { LatestActivitiesCta } from "@/components/sections/LatestActivitiesCta";
 
 function excerpt(text: string, max = 120) {
@@ -8,12 +9,20 @@ function excerpt(text: string, max = 120) {
   return plain.length > max ? `${plain.slice(0, max)}…` : plain;
 }
 
-export async function LatestActivities() {
-  const noticias = await getLatestNoticias(3);
+type ActivityCard = {
+  id: string;
+  titulo: string;
+  contenido: string;
+  fecha: Date;
+  portadaUrl: string | null;
+};
 
-  if (noticias.length === 0) {
-    return null;
-  }
+export async function LatestActivities() {
+  const fromDb = await getLatestNoticias(3);
+  const isPreview = fromDb.length === 0;
+  const noticias: ActivityCard[] = isPreview
+    ? PLACEHOLDER_ACTIVITIES.map((p) => ({ ...p }))
+    : fromDb;
 
   return (
     <section
@@ -33,6 +42,13 @@ export async function LatestActivities() {
             >
               Últimas actividades
             </h2>
+            {isPreview && (
+              <p className="mt-3 text-sm text-muted-foreground max-w-xl leading-relaxed">
+                Próximamente publicaremos los registros de nuestras actividades
+                y novedades institucionales. Mientras tanto, te invitamos a
+                conocer nuestra propuesta formativa.
+              </p>
+            )}
           </div>
           <LatestActivitiesCta />
         </div>
@@ -41,9 +57,14 @@ export async function LatestActivities() {
           {noticias.map((noticia) => (
             <article
               key={noticia.id}
-              className="group flex flex-col rounded-2xl border border-border/60 bg-school-neutral/50 overflow-hidden hover:border-school-gold/40 hover:shadow-lg transition-all duration-300"
+              className="group relative flex flex-col rounded-2xl border border-border/60 bg-school-neutral/50 overflow-hidden hover:border-school-gold/40 hover:shadow-lg transition-all duration-300"
             >
-              <div className="relative aspect-16/10 bg-school-violet/10">
+              {isPreview && (
+                <span className="absolute z-10 top-4 left-4 text-[10px] uppercase font-semibold tracking-wider bg-school-gold/90 text-school-violet px-2.5 py-1 rounded-full">
+                  Próximamente
+                </span>
+              )}
+              <div className="relative aspect-16/10 bg-school-violet/10 shrink-0">
                 {noticia.portadaUrl ? (
                   <Image
                     src={noticia.portadaUrl}
@@ -59,28 +80,36 @@ export async function LatestActivities() {
                 )}
               </div>
               <div className="flex flex-col flex-1 p-6">
-                <time
-                  dateTime={noticia.fecha.toISOString()}
-                  className="text-xs text-muted-foreground mb-2"
-                >
-                  {noticia.fecha.toLocaleDateString("es-CL", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </time>
+                {!isPreview && (
+                  <time
+                    dateTime={noticia.fecha.toISOString()}
+                    className="text-xs text-muted-foreground mb-2"
+                  >
+                    {noticia.fecha.toLocaleDateString("es-CL", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </time>
+                )}
                 <h3 className="font-heading font-semibold text-lg text-foreground mb-2 line-clamp-2 group-hover:text-school-violet transition-colors">
-                  <Link href={`/noticias/${noticia.id}`}>{noticia.titulo}</Link>
+                  {isPreview ? (
+                    noticia.titulo
+                  ) : (
+                    <Link href={`/noticias/${noticia.id}`}>{noticia.titulo}</Link>
+                  )}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed flex-1">
                   {excerpt(noticia.contenido)}
                 </p>
-                <Link
-                  href={`/noticias/${noticia.id}`}
-                  className="mt-4 text-sm font-medium text-school-violet hover:text-school-gold transition-colors"
-                >
-                  Leer más →
-                </Link>
+                {!isPreview && (
+                  <Link
+                    href={`/noticias/${noticia.id}`}
+                    className="mt-4 text-sm font-medium text-school-violet hover:text-school-gold transition-colors"
+                  >
+                    Leer más →
+                  </Link>
+                )}
               </div>
             </article>
           ))}

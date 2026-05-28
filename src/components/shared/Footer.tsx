@@ -1,16 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CONTACT } from "@/lib/contact";
-
-const FOOTER_LINKS = [
-  { label: "Nosotros", href: "/#nosotros" },
-  { label: "Actividades", href: "/noticias" },
-  { label: "Galería", href: "/galeria" },
-  { label: "Documentos", href: "/documentos" },
-  { label: "Oferta Educativa", href: "/#servicios" },
-  { label: "Matrícula 2026", href: "/#admision" },
-  { label: "Contacto", href: "/#contacto" },
-];
+import { FOOTER_NAV_ITEMS } from "@/lib/nav-config";
 
 function InstagramIcon() {
   return (
@@ -85,7 +76,7 @@ export function Footer() {
             </p>
             <nav aria-label="Navegación del pie de página">
               <ul className="space-y-2">
-                {FOOTER_LINKS.map((link) => (
+                {FOOTER_NAV_ITEMS.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}

@@ -1,6 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { HIDDEN_LOGIN_PATH } from "@/lib/auth-routes";
+import { ensureInitialAdmin } from "@/lib/admin-seed";
+import { prisma } from "@/lib/prisma";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -22,38 +25,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const turnstileOk = await verifyTurnstileToken(turnstileToken);
         if (!turnstileOk) return null;
 
-        const adminEmail = process.env.ADMIN_EMAIL;
-        const adminPassword = process.env.ADMIN_PASSWORD;
-        const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+        if (!email || !password) return null;
 
-        if (!email || !password || !adminEmail || email !== adminEmail) {
-          return null;
-        }
+        await ensureInitialAdmin();
 
-        let valid = false;
-        if (adminPasswordHash) {
-          valid = await bcrypt.compare(password, adminPasswordHash);
-        } else if (adminPassword) {
-          valid = password === adminPassword;
-        }
+        const admin = await prisma.admin.findUnique({
+          where: { email: email.trim().toLowerCase() },
+        });
 
+        if (!admin) return null;
+
+        const valid = await bcrypt.compare(password, admin.passwordHash);
         if (!valid) return null;
 
         return {
-          id: "admin",
-          email: adminEmail,
+          id: admin.id,
+          email: admin.email,
           name: "Administrador",
         };
       },
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: HIDDEN_LOGIN_PATH,
   },
   session: {
     strategy: "jwt",
   },
   callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+        token.email = user.email;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+        session.user.email = (token.email as string) ?? session.user.email;
+      }
+      return session;
+    },
     authorized({ auth, request }) {
       if (request.nextUrl.pathname.startsWith("/admin")) {
         return !!auth;

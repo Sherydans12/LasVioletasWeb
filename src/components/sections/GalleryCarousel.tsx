@@ -7,11 +7,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Images } from "lucide-react";
 import type { Media } from "@prisma/client";
 
+type GalleryItem = Pick<Media, "id" | "url" | "tipo">;
+
 type GalleryCarouselProps = {
-  items: Pick<Media, "id" | "url" | "tipo">[];
+  items: GalleryItem[];
+  isPreview?: boolean;
 };
 
-export function GalleryCarousel({ items }: GalleryCarouselProps) {
+export function GalleryCarousel({ items, isPreview = false }: GalleryCarouselProps) {
   const [index, setIndex] = useState(0);
   const [dismissed, setDismissed] = useState(false);
 
@@ -57,16 +60,24 @@ export function GalleryCarousel({ items }: GalleryCarouselProps) {
             >
               Momentos destacados
             </h2>
+            {isPreview && (
+              <p className="text-sm text-white/70 mt-2 max-w-lg">
+                Vista previa de nuestro establecimiento. Pronto compartiremos
+                fotos y videos de actividades en la galería oficial.
+              </p>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={() => setDismissed(true)}
-            className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-school-gold transition-colors"
-            aria-label="Ocultar carrusel"
-          >
-            <X size={18} />
-            Cerrar
-          </button>
+          {!isPreview && (
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-school-gold transition-colors"
+              aria-label="Ocultar carrusel"
+            >
+              <X size={18} />
+              Cerrar
+            </button>
+          )}
         </div>
 
         <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl aspect-21/9 max-h-[420px] bg-black/20">
