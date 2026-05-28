@@ -1,6 +1,8 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
+import { deleteStoredFileByUrl } from "@/lib/upload-delete";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -32,7 +34,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
 
   try {
+    const media = await prisma.media.findUnique({ where: { id } });
+    if (!media) {
+      return NextResponse.json({ error: "Recurso no encontrado" }, { status: 404 });
+    }
+
     await prisma.media.delete({ where: { id } });
+    await deleteStoredFileByUrl(media.url);
+    revalidatePath("/admin/galeria");
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

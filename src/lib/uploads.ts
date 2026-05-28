@@ -2,6 +2,13 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { assertStorageQuota } from "@/lib/storage";
+import {
+  resolveStoredFilePath,
+  safeUploadFilename,
+  type UploadCategory,
+} from "@/lib/upload-paths";
+
+export type { UploadCategory } from "@/lib/upload-paths";
 
 export class UploadValidationError extends Error {
   constructor(message: string) {
@@ -9,8 +16,6 @@ export class UploadValidationError extends Error {
     this.name = "UploadValidationError";
   }
 }
-
-type UploadCategory = "noticias" | "galeria" | "documentos";
 
 const RULES: Record<
   UploadCategory,
@@ -34,11 +39,11 @@ const RULES: Record<
 };
 
 function safeBasename(filename: string): string {
-  const base = path.basename(filename.replace(/\\/g, "/"));
-  if (base.includes("..") || base.includes("/") || base.includes("\0")) {
+  try {
+    return safeUploadFilename(filename);
+  } catch {
     throw new UploadValidationError("Nombre de archivo no permitido");
   }
-  return base;
 }
 
 function resolveExtension(
@@ -107,20 +112,8 @@ export async function saveUpload(
   const ext = resolveExtension(file.name, mimeType, category);
   const filename = `${randomUUID()}${ext}`;
 
-  const uploadsRoot = path.resolve(process.cwd(), "public", "uploads");
-  const targetDir = path.resolve(uploadsRoot, category);
-
-  if (!targetDir.startsWith(uploadsRoot)) {
-    throw new UploadValidationError("Ruta de destino inválida");
-  }
-
-  await mkdir(targetDir, { recursive: true });
-
-  const targetPath = path.resolve(targetDir, filename);
-  if (!targetPath.startsWith(targetDir)) {
-    throw new UploadValidationError("Ruta de archivo inválida");
-  }
-
+  const targetPath = resolveStoredFilePath(category, filename);
+  await mkdir(path.dirname(targetPath), { recursive: true });
   await writeFile(targetPath, buffer);
 
   return {

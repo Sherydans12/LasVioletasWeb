@@ -44,8 +44,9 @@ yarn-error.log*
 .env.*.local
 !.env.example
 
-# user uploads (generated at runtime)
+# user uploads (generated at runtime; legacy public/ + UPLOAD_DIR storage/)
 /public/uploads/
+/storage/
 
 # vercel
 .vercel

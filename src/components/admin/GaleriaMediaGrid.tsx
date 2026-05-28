@@ -1,0 +1,120 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
+import type { Media } from "@prisma/client";
+import { deleteMedia } from "@/app/admin/galeria/actions";
+import { cn } from "@/lib/utils";
+
+function displayNameFromUrl(url: string): string {
+  const segment = url.split("/").pop() ?? url;
+  if (segment.length <= 28) return segment;
+  return `${segment.slice(0, 12)}…${segment.slice(-10)}`;
+}
+
+export function GaleriaMediaGrid({ items }: { items: Media[] }) {
+  const router = useRouter();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  async function onDelete(id: string) {
+    if (
+      !window.confirm(
+        "¿Eliminar este recurso de la galería? Se borrará el archivo del servidor."
+      )
+    ) {
+      return;
+    }
+
+    setPendingId(id);
+    setError(null);
+
+    const result = await deleteMedia(id);
+    if (!result.ok) {
+      setError(result.error);
+      setPendingId(null);
+      return;
+    }
+
+    startTransition(() => {
+      router.refresh();
+      setPendingId(null);
+    });
+  }
+
+  if (items.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground py-8 text-center">
+        Aún no hay recursos en la galería. Sube el primero arriba.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {items.map((item) => {
+          const label = displayNameFromUrl(item.url);
+          const fecha = new Date(item.fecha).toLocaleDateString("es-CL");
+          const deleting = pendingId === item.id;
+
+          return (
+            <article
+              key={item.id}
+              className={cn(
+                "group relative aspect-square overflow-hidden rounded-xl border border-school-violet/10 bg-school-neutral shadow-sm transition-shadow hover:shadow-md",
+                deleting && "opacity-50 pointer-events-none"
+              )}
+            >
+              {item.tipo === "video" ? (
+                <video
+                  src={item.url}
+                  className="h-full w-full object-cover"
+                  muted
+                  playsInline
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.url}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              )}
+
+              {item.destacado && (
+                <span className="absolute top-2 left-2 z-10 text-[10px] uppercase font-semibold bg-school-gold text-school-violet px-2 py-0.5 rounded-full">
+                  Destacado
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onDelete(item.id)}
+                disabled={deleting}
+                aria-label={`Eliminar ${label}`}
+                className="absolute bottom-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-background/90 shadow-sm opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold disabled:opacity-40"
+              >
+                <Trash2 className="h-4 w-4 text-destructive" aria-hidden />
+              </button>
+
+              <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent px-2 pb-2 pt-8 pointer-events-none">
+                <p className="truncate text-[11px] font-medium text-white/95">
+                  {label}
+                </p>
+                <p className="text-[10px] text-white/75">{fecha}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
