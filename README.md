@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Las Violetas Web
 
-## Getting Started
+> Sitio institucional del **Instituto Las Violetas** (Coquimbo, Chile): matrícula, oferta educativa para adultos y contacto.
 
-First, run the development server:
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)](https://tailwindcss.com)
+
+## Tabla de contenidos
+
+- [Descripción](#descripción)
+- [Stack](#stack)
+- [Inicio rápido](#inicio-rápido)
+- [Estructura](#estructura)
+- [Variables de entorno](#variables-de-entorno)
+- [Scripts](#scripts)
+- [Despliegue (Coolify / Docker)](#despliegue-coolify--docker)
+- [Documentación](#documentación)
+
+## Descripción
+
+Aplicación **Next.js (App Router)** con identidad visual es-CL, secciones de landing (Hero, Nosotros, Servicios, Instalaciones, Matrícula, Contacto), **TopHeader** dinámico según scroll, SEO (metadata, Open Graph, JSON-LD) y `sitemap` / `robots` generados.
+
+## Stack
+
+| Capa        | Tecnología                          |
+|------------|-------------------------------------|
+| Framework  | Next.js 16 (App Router)            |
+| Lenguaje   | TypeScript 5                        |
+| Estilos    | Tailwind CSS v4 + tokens en CSS     |
+| UI         | shadcn/ui (Base UI)                 |
+| Animación  | Framer Motion                       |
+| Íconos     | Lucide React                        |
+
+## Inicio rápido
+
+**Requisitos:** Node.js ≥ 20.
 
 ```bash
+git clone https://github.com/Sherydans12/LasVioletasWeb.git
+cd LasVioletasWeb
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                 # Rutas, layout, globals.css, sitemap, robots
+├── components/
+│   ├── sections/        # Hero, About, Services, …
+│   ├── shared/          # Navbar, TopHeader, Footer, mapa, WhatsApp
+│   └── ui/              # Componentes base (shadcn)
+├── contexts/            # Estado compartido header (scroll)
+├── lib/                 # Utilidades, contacto centralizado, animaciones
+├── services/            # Cliente HTTP y envío de formulario
+└── types/
+```
 
-## Learn More
+Detalle de arquitectura y convenciones: [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md).
 
-To learn more about Next.js, take a look at the following resources:
+## Variables de entorno
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copia `.env.example` a `.env.local` y ajusta valores. Resumen:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable                 | Obligatoria | Descripción                                      |
+|--------------------------|------------|--------------------------------------------------|
+| `NEXT_PUBLIC_SITE_URL`   | Recomendada | URL canónica (OG, sitemap). Default en código: `https://colegiolasvioletas.cl` |
+| `API_BASE_URL`           | No         | Base del API si difiere del origen (vacío = mismo sitio) |
+| `NEXT_PUBLIC_GA_ID`      | No         | Google Analytics (cuando se active en layout)   |
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Comando           | Descripción              |
+|-------------------|--------------------------|
+| `npm run dev`     | Servidor de desarrollo   |
+| `npm run build`   | Build de producción      |
+| `npm run start`   | Servidor de producción   |
+| `npm run lint`    | ESLint                   |
+| `npm run type-check` | `tsc --noEmit`        |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Despliegue (Coolify / Docker)
+
+El proyecto usa **`output: "standalone"`** en `next.config.ts` para generar un servidor Node autocontenido en `.next/standalone/`, adecuado para imágenes Docker en Coolify. En el contenedor, tras `npm run build`, expón el puerto con `node .next/standalone/server.js` (o el comando que defina tu Dockerfile) y copia **`public`** y **`.next/static`** junto al standalone según la [documentación oficial de Next.js](https://nextjs.org/docs/app/building-your-application/deploying).
+
+Define al menos `NEXT_PUBLIC_SITE_URL` con la URL pública del despliegue (p. ej. `https://colegiolasvioletas.cl`).
+
+## Documentación
+
+- Arquitectura y guías de cambio: [`PROJECT_ARCHITECTURE.md`](./PROJECT_ARCHITECTURE.md)
+- Commits: [Conventional Commits](https://www.conventionalcommits.org/) (ver `.cursor/skills/git-commit-writer.skill.md` si está en tu clon)
