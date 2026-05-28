@@ -2,22 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Newspaper,
-  Images,
-  FileText,
-  UserCircle,
-  ExternalLink,
-} from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { NAV_ICONS } from "@/lib/nav-icons";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/admin", label: "Panel", icon: LayoutDashboard, exact: true },
-  { href: "/admin/noticias", label: "Noticias", icon: Newspaper },
-  { href: "/admin/galeria", label: "Galería", icon: Images },
-  { href: "/admin/documentos", label: "Documentos", icon: FileText },
-  { href: "/admin/perfil", label: "Mi perfil", icon: UserCircle },
+  { href: "/admin", label: "Panel", icon: NAV_ICONS.home, exact: true },
+  { href: "/admin/noticias", label: "Noticias", icon: NAV_ICONS.noticias },
+  { href: "/admin/galeria", label: "Galería", icon: NAV_ICONS.galeria },
+  {
+    href: "/admin/documentos",
+    label: "Documentos",
+    icon: NAV_ICONS.documentos,
+  },
+  { href: "/admin/perfil", label: "Mi perfil", icon: NAV_ICONS.perfil },
 ] as const;
 
 function isActive(pathname: string, href: string, exact?: boolean) {

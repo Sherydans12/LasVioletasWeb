@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { Navbar } from "@/components/shared/Navbar";
-import { Footer } from "@/components/shared/Footer";
-import { WhatsAppBubble } from "@/components/shared/WhatsAppBubble";
+import { PublicPageShell } from "@/components/shared/PublicPageShell";
+import { BackToHomeLink } from "@/components/shared/BackToHomeLink";
+import { PublicEmptyState } from "@/components/shared/PublicEmptyState";
 import { GaleriaGrid } from "@/components/galeria/GaleriaGrid";
+import { NAV_ICONS } from "@/lib/nav-icons";
 import { getGalleryMedia } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
@@ -17,29 +17,29 @@ export default async function GaleriaPage() {
   const items = await getGalleryMedia();
 
   return (
-    <>
-      <Navbar />
-      <main id="main-content" className="pt-28 lg:pt-32 pb-20 bg-school-neutral min-h-screen">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <header className="mb-10">
-            <Link
-              href="/"
-              className="text-sm text-school-violet hover:text-school-gold mb-4 inline-block"
-            >
-              ← Inicio
-            </Link>
-            <h1 className="text-(length:--text-4xl) font-heading font-bold text-foreground">
-              Galería
-            </h1>
-            <p className="text-muted-foreground mt-3 max-w-2xl">
-              Recuerdos visuales de nuestra comunidad educativa en Coquimbo.
-            </p>
-          </header>
-          <GaleriaGrid items={items} />
-        </div>
-      </main>
-      <Footer />
-      <WhatsAppBubble />
-    </>
+    <PublicPageShell>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <header>
+          <BackToHomeLink />
+          <h1 className="text-(length:--text-4xl) font-heading font-bold text-foreground text-balance">
+            Galería
+          </h1>
+          <p className="text-muted-foreground mt-3 max-w-2xl text-pretty">
+            Recuerdos visuales de nuestra comunidad educativa en Coquimbo.
+          </p>
+        </header>
+
+        {items.length === 0 ? (
+          <PublicEmptyState
+            icon={NAV_ICONS.galeria}
+            message="Próximamente se publicarán registros multimedia de nuestras actividades institucionales."
+          />
+        ) : (
+          <div className="mt-10">
+            <GaleriaGrid items={items} />
+          </div>
+        )}
+      </div>
+    </PublicPageShell>
   );
 }

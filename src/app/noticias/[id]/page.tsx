@@ -28,7 +28,7 @@ export default async function NoticiaDetailPage({ params }: PageProps) {
   return (
     <>
       <Navbar />
-      <main id="main-content" className="pt-28 lg:pt-32 pb-20 bg-background min-h-screen">
+      <main id="main-content" className="pt-28 md:pt-36 pb-20 bg-background min-h-screen">
         <article className="max-w-3xl mx-auto px-6 lg:px-8">
           <Link
             href="/noticias"

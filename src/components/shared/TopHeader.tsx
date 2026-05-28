@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MapPin, Phone } from "lucide-react";
+import { Phone } from "lucide-react";
+import { NAV_ICONS } from "@/lib/nav-icons";
 import { CONTACT } from "@/lib/contact";
 import { useSiteHeaderScroll } from "@/contexts/site-header-scroll";
 
@@ -107,7 +108,7 @@ export function TopHeader() {
               className="group flex items-center gap-1.5 text-white/70 hover:text-school-gold text-xs min-w-0 transition-colors duration-200 max-w-[min(100%,14rem)] sm:max-w-none"
               aria-label={`Abrir ubicación en Google Maps: ${ADDRESS_LINE}`}
             >
-              <MapPin
+              <NAV_ICONS.ubicacion
                 size={14}
                 className="text-school-gold opacity-80 shrink-0"
                 aria-hidden="true"

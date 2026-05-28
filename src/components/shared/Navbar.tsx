@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { PUBLIC_NAV_ITEMS } from "@/lib/nav-config";
+import { getNavIconForHref } from "@/lib/nav-icons";
 import {
   TOP_HEADER_OFFSET_PX,
   useSiteHeaderScroll,
@@ -33,14 +34,14 @@ export function Navbar() {
           : "bg-school-violet"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex items-center justify-between h-[72px] sm:h-20 md:h-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-5 md:px-6 lg:px-8">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center h-[72px] md:h-20 lg:h-24 gap-x-3 md:gap-x-4 xl:gap-x-6">
           <Link
             href="/"
             aria-label="Instituto Las Violetas — Página de inicio"
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-2 md:gap-2.5 shrink-0 max-w-[min(100%,13.5rem)] sm:max-w-[min(100%,15rem)] xl:max-w-none group col-start-1"
           >
-            <div className="relative h-14 w-14 sm:h-[75px] sm:w-[75px] md:h-[85px] md:w-[85px] shrink-0">
+            <div className="relative h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 xl:h-14 xl:w-14 2xl:h-[85px] 2xl:w-[85px] shrink-0">
               <Image
                 src="/logo-institucional.png"
                 alt="Escudo oficial del Instituto Las Violetas"
@@ -49,27 +50,40 @@ export function Navbar() {
                 priority
               />
             </div>
-            <span className="font-heading font-semibold text-lg tracking-wide text-white hidden sm:block">
+            {/* Título solo cuando el menú es hamburguesa; en xl+ el logo evita choque con la nav */}
+            <span className="font-heading font-semibold text-base md:text-lg tracking-wide text-white hidden sm:block xl:hidden whitespace-nowrap">
               Las Violetas
             </span>
           </Link>
 
+          <div className="col-start-2 min-w-2 xl:min-w-4" aria-hidden />
+
           <nav
             aria-label="Principal"
-            className="hidden xl:flex items-center gap-6"
+            className="hidden xl:flex items-center justify-end gap-2 2xl:gap-4 min-w-0 col-start-3 shrink-0"
           >
-            {PUBLIC_NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm font-medium text-white/80 hover:text-school-gold transition-colors duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-px after:bg-school-gold after:transition-all after:duration-200 hover:after:w-full whitespace-nowrap"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {PUBLIC_NAV_ITEMS.map((item) => {
+              const Icon = getNavIconForHref(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-school-gold transition-colors duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-px after:bg-school-gold after:transition-all after:duration-200 hover:after:w-full whitespace-nowrap shrink-0"
+                >
+                  {Icon && (
+                    <Icon
+                      size={16}
+                      className="shrink-0 opacity-80"
+                      aria-hidden
+                    />
+                  )}
+                  {item.label}
+                </Link>
+              );
+            })}
             <Link
               href="/#admision"
-              className="inline-flex items-center justify-center px-5 py-2 rounded-lg bg-school-gold text-school-violet text-sm font-semibold hover:bg-school-gold-light transition-colors duration-200 hover:-translate-y-px hover:shadow-md hover:shadow-school-gold/30 min-h-[44px] shrink-0"
+              className="inline-flex items-center justify-center px-4 2xl:px-5 py-2 rounded-lg bg-school-gold text-school-violet text-sm font-semibold hover:bg-school-gold-light transition-colors duration-200 hover:-translate-y-px hover:shadow-md hover:shadow-school-gold/30 min-h-[44px] shrink-0 whitespace-nowrap"
             >
               Matrícula 2026
             </Link>
@@ -81,7 +95,7 @@ export function Navbar() {
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             onClick={() => setMenuOpen((prev) => !prev)}
-            className="xl:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
+            className="xl:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200 shrink-0 col-start-3 justify-self-end"
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -102,16 +116,22 @@ export function Navbar() {
             className="xl:hidden bg-school-violet/95 backdrop-blur-md border-b border-white/10"
           >
             <nav className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-4">
-              {PUBLIC_NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-base font-medium text-white/80 hover:text-school-gold transition-colors py-1"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {PUBLIC_NAV_ITEMS.map((item) => {
+                const Icon = getNavIconForHref(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="inline-flex items-center gap-2.5 text-base font-medium text-white/80 hover:text-school-gold transition-colors py-1"
+                  >
+                    {Icon && (
+                      <Icon size={18} className="shrink-0 opacity-80" aria-hidden />
+                    )}
+                    {item.label}
+                  </Link>
+                );
+              })}
               <Link
                 href="/#admision"
                 onClick={() => setMenuOpen(false)}

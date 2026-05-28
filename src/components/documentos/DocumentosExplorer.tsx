@@ -1,4 +1,5 @@
-import { FileText, Download } from "lucide-react";
+import { Download } from "lucide-react";
+import { NAV_ICONS } from "@/lib/nav-icons";
 import { formatFileSize } from "@/lib/uploads";
 import type { CategoriaDocumento, Documento } from "@prisma/client";
 
@@ -18,15 +19,6 @@ export function DocumentosExplorer({
 }: {
   categorias: CategoriaWithDocs[];
 }) {
-  if (categorias.length === 0) {
-    return (
-      <p className="text-center text-muted-foreground py-16">
-        Los documentos oficiales se publicarán pronto desde el panel de
-        administración.
-      </p>
-    );
-  }
-
   return (
     <div className="space-y-10">
       {categorias.map((cat) => (
@@ -37,7 +29,7 @@ export function DocumentosExplorer({
         >
           <header className="flex items-center gap-3 px-6 py-4 bg-school-violet/5 border-b border-border/50">
             <div className="w-10 h-10 rounded-lg bg-school-violet/10 flex items-center justify-center">
-              <FileText className="text-school-violet" size={20} />
+              <NAV_ICONS.documentos className="text-school-violet" size={20} />
             </div>
             <h2
               id={`cat-${cat.id}`}

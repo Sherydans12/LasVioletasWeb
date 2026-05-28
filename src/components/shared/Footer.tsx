@@ -37,7 +37,7 @@ export function Footer() {
                 height={75}
                 className="object-contain drop-shadow-[0_1px_4px_rgba(255,255,255,0.15)] group-hover:scale-105 transition-transform duration-200"
               />
-              <span className="font-heading font-semibold text-lg tracking-wide text-white">
+              <span className="font-heading font-semibold text-lg tracking-wide text-white whitespace-nowrap">
                 Las Violetas
               </span>
             </Link>
