@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import type { Media } from "@prisma/client";
 import { deleteMedia } from "@/app/admin/galeria/actions";
+import { MediaPreviewLightbox } from "@/components/admin/MediaPreviewLightbox";
 import { cn } from "@/lib/utils";
 
 function displayNameFromUrl(url: string): string {
@@ -17,6 +18,7 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [previewItem, setPreviewItem] = useState<Media | null>(null);
   const [, startTransition] = useTransition();
 
   async function onDelete(id: string) {
@@ -59,6 +61,12 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
           {error}
         </p>
       )}
+
+      <MediaPreviewLightbox
+        item={previewItem}
+        onClose={() => setPreviewItem(null)}
+      />
+
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {items.map((item) => {
           const label = displayNameFromUrl(item.url);
@@ -68,15 +76,24 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
           return (
             <article
               key={item.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setPreviewItem(item)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setPreviewItem(item);
+                }
+              }}
               className={cn(
-                "group relative aspect-square overflow-hidden rounded-xl border border-school-violet/10 bg-school-neutral shadow-sm transition-shadow hover:shadow-md",
-                deleting && "opacity-50 pointer-events-none"
+                "group relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-school-violet/10 bg-school-neutral shadow-sm transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold",
+                deleting && "pointer-events-none opacity-50"
               )}
             >
               {item.tipo === "video" ? (
                 <video
                   src={item.url}
-                  className="h-full w-full object-cover"
+                  className="aspect-square h-full w-full object-cover"
                   muted
                   playsInline
                 />
@@ -85,27 +102,43 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
                 <img
                   src={item.url}
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="aspect-square h-full w-full object-cover"
                 />
               )}
 
               {item.destacado && (
-                <span className="absolute top-2 left-2 z-10 text-[10px] uppercase font-semibold bg-school-gold text-school-violet px-2 py-0.5 rounded-full">
+                <span className="absolute top-2 left-2 z-10 rounded-full bg-school-gold px-2 py-0.5 text-[10px] font-semibold uppercase text-school-violet">
                   Destacado
                 </span>
               )}
 
-              <button
-                type="button"
-                onClick={() => onDelete(item.id)}
-                disabled={deleting}
-                aria-label={`Eliminar ${label}`}
-                className="absolute bottom-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-background/90 shadow-sm opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold disabled:opacity-40"
-              >
-                <Trash2 className="h-4 w-4 text-destructive" aria-hidden />
-              </button>
+              <div className="absolute bottom-2 right-2 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPreviewItem(item);
+                  }}
+                  aria-label={`Ver ${label}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-background/90 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
+                >
+                  <Eye className="h-4 w-4 text-school-violet" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void onDelete(item.id);
+                  }}
+                  disabled={deleting}
+                  aria-label={`Eliminar ${label}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-background/90 shadow-sm disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" aria-hidden />
+                </button>
+              </div>
 
-              <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent px-2 pb-2 pt-8 pointer-events-none">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent px-2 pb-2 pt-8">
                 <p className="truncate text-[11px] font-medium text-white/95">
                   {label}
                 </p>

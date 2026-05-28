@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import type { Media } from "@prisma/client";
 import { fadeInUp, staggerContainerFast, VIEWPORT_ONCE } from "@/lib/animations";
@@ -63,21 +62,20 @@ export function GaleriaGrid({ items }: { items: Media[] }) {
             <motion.figure
               key={item.id}
               variants={fadeInUp}
-              className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border/50 bg-school-neutral shadow-sm"
+              className="flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-school-neutral p-2 shadow-sm"
             >
               {item.tipo === "video" ? (
                 <video
                   src={item.url}
                   controls
-                  className="w-full h-full object-cover"
+                  className="max-h-[480px] max-w-full h-auto w-full"
                 />
               ) : (
-                <Image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   src={item.url}
                   alt=""
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="max-h-[480px] max-w-full h-auto w-full object-contain"
                 />
               )}
             </motion.figure>

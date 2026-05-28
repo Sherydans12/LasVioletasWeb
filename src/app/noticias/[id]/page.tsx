@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/shared/Navbar";
@@ -50,14 +49,12 @@ export default async function NoticiaDetailPage({ params }: PageProps) {
             {noticia.titulo}
           </h1>
           {noticia.portadaUrl && (
-            <div className="relative aspect-video rounded-2xl overflow-hidden mb-8">
-              <Image
+            <div className="mb-8 flex justify-center overflow-hidden rounded-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={noticia.portadaUrl}
                 alt=""
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 100vw, 768px"
+                className="max-w-full h-auto w-full object-contain"
               />
             </div>
           )}

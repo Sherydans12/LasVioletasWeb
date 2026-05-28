@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import type { MediaTipo } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -54,6 +55,9 @@ export async function POST(request: Request) {
         tamanoBytes: saved.size,
       },
     });
+
+    revalidatePath("/admin/galeria");
+    revalidatePath("/galeria");
 
     return NextResponse.json(media, { status: 201 });
   } catch (err) {

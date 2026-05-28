@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminFormField } from "@/components/admin/AdminFormField";
 import { adminFieldClass, adminInputBase } from "@/lib/admin-form-styles";
@@ -8,15 +8,19 @@ import { cn } from "@/lib/utils";
 
 export function NoticiaForm() {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [fileKey, setFileKey] = useState(0);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    const form = e.currentTarget;
+    const form = formRef.current;
+    if (!form) return;
+
     const data = new FormData(form);
 
     try {
@@ -28,7 +32,10 @@ export function NoticiaForm() {
         const err = (await res.json()) as { error?: string };
         throw new Error(err.error ?? "Error al publicar");
       }
-      form.reset();
+      if (formRef.current) {
+        formRef.current.reset();
+      }
+      setFileKey((k) => k + 1);
       setMessage("Noticia publicada. Las imágenes se sincronizaron con la galería.");
       router.refresh();
     } catch (err) {
@@ -40,6 +47,7 @@ export function NoticiaForm() {
 
   return (
     <form
+      ref={formRef}
       onSubmit={onSubmit}
       className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6 lg:p-8 space-y-6 max-w-2xl"
     >
@@ -77,6 +85,7 @@ export function NoticiaForm() {
           Imagen de portada
         </label>
         <input
+          key={`portada-${fileKey}`}
           id="portada"
           name="portada"
           type="file"
@@ -90,6 +99,7 @@ export function NoticiaForm() {
           Imágenes adicionales (galería automática)
         </label>
         <input
+          key={`imagenes-${fileKey}`}
           id="imagenes"
           name="imagenes"
           type="file"

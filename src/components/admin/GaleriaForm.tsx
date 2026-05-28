@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminFormField } from "@/components/admin/AdminFormField";
 import { adminFieldClass, adminInputBase } from "@/lib/admin-form-styles";
@@ -8,15 +8,29 @@ import { cn } from "@/lib/utils";
 
 export function GaleriaForm() {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [fileKey, setFileKey] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  function clearFileState() {
+    setSelectedFile(null);
+    setFileKey((k) => k + 1);
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    const data = new FormData(e.currentTarget);
+    const form = formRef.current;
+    if (!form) return;
+
+    const data = new FormData(form);
 
     try {
       const res = await fetch("/api/media", { method: "POST", body: data });
@@ -24,7 +38,8 @@ export function GaleriaForm() {
         const err = (await res.json()) as { error?: string };
         throw new Error(err.error ?? "Error al subir");
       }
-      e.currentTarget.reset();
+
+      clearFileState();
       setMessage("Archivo agregado a la galería.");
       router.refresh();
     } catch (err) {
@@ -36,6 +51,7 @@ export function GaleriaForm() {
 
   return (
     <form
+      ref={formRef}
       onSubmit={onSubmit}
       className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6 space-y-4 max-w-xl"
     >
@@ -44,16 +60,26 @@ export function GaleriaForm() {
           Foto o video <span className="text-school-gold">*</span>
         </label>
         <input
+          key={fileKey}
           id="archivo"
           name="archivo"
           type="file"
           accept="image/*,video/*"
           required
+          onChange={(e) => {
+            const file = e.target.files?.[0] ?? null;
+            setSelectedFile(file);
+          }}
           className={cn(
             adminFieldClass("idle", adminInputBase),
             "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
           )}
         />
+        {selectedFile && (
+          <p className="text-xs text-muted-foreground truncate">
+            Seleccionado: {selectedFile.name}
+          </p>
+        )}
       </div>
 
       <AdminFormField label="Tipo (opcional)" name="tipo" as="select" inputProps={{ defaultValue: "" }}>

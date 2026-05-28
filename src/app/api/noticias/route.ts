@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
@@ -72,6 +73,11 @@ export async function POST(request: Request) {
       await syncMediaFromNoticia(created.id, mediaItems, tx);
       return created;
     });
+
+    revalidatePath("/admin/galeria");
+    revalidatePath("/admin/noticias");
+    revalidatePath("/galeria");
+    revalidatePath("/noticias");
 
     return NextResponse.json(noticia, { status: 201 });
   } catch (err) {

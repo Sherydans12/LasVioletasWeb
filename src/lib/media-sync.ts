@@ -1,4 +1,4 @@
-import type { MediaTipo, Prisma } from "@prisma/client";
+import type { MediaOrigen, MediaTipo, Prisma } from "@prisma/client";
 import { inferMediaTipo } from "@/lib/uploads";
 
 export type MediaSyncItem = {
@@ -10,7 +10,25 @@ function tipoFromUrl(url: string): MediaTipo {
   return inferMediaTipo(url) === "video" ? "video" : "image";
 }
 
-/** Duplica archivos de una noticia en la galería global con origen `noticia`. */
+/** Payload Prisma para registrar un archivo subido en la biblioteca global. */
+export function buildMediaRecord(
+  item: MediaSyncItem,
+  opts: { origen: MediaOrigen; asociadoAId?: string; destacado?: boolean }
+) {
+  return {
+    url: item.url,
+    tamanoBytes: item.tamanoBytes,
+    tipo: tipoFromUrl(item.url),
+    origen: opts.origen,
+    asociadoAId: opts.asociadoAId ?? null,
+    destacado: opts.destacado ?? false,
+  };
+}
+
+/**
+ * Sincronización atómica Noticias ↔ Galería: reemplaza los registros `Media`
+ * vinculados a la noticia dentro de la misma transacción Prisma.
+ */
 export async function syncMediaFromNoticia(
   noticiaId: string,
   items: MediaSyncItem[],
@@ -28,12 +46,8 @@ export async function syncMediaFromNoticia(
   if (unique.size === 0) return;
 
   await tx.media.createMany({
-    data: [...unique.values()].map((item) => ({
-      url: item.url,
-      tamanoBytes: item.tamanoBytes,
-      tipo: tipoFromUrl(item.url),
-      origen: "noticia" as const,
-      asociadoAId: noticiaId,
-    })),
+    data: [...unique.values()].map((item) =>
+      buildMediaRecord(item, { origen: "noticia", asociadoAId: noticiaId })
+    ),
   });
 }
