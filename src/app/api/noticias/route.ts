@@ -29,8 +29,14 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const titulo = String(form.get("titulo") ?? "").trim();
     const contenido = String(form.get("contenido") ?? "").trim();
-    const fechaRaw = String(form.get("fecha") ?? "");
-    const fecha = fechaRaw ? new Date(fechaRaw) : new Date();
+    const fechaRaw = String(form.get("fecha") ?? "").trim();
+    const fecha = fechaRaw ? new Date(fechaRaw) : null;
+    if (!fecha || Number.isNaN(fecha.getTime())) {
+      return NextResponse.json(
+        { error: "Fecha de publicación inválida o requerida" },
+        { status: 400 }
+      );
+    }
 
     if (!titulo || !contenido) {
       return NextResponse.json(

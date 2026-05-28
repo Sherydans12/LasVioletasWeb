@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
@@ -31,6 +32,9 @@ export async function POST(request: Request) {
         mimeType: saved.mimeType,
       },
     });
+
+    revalidatePath("/admin/documentos");
+    revalidatePath("/documentos");
 
     return NextResponse.json(documento, { status: 201 });
   } catch (err) {

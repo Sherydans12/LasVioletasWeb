@@ -1,9 +1,11 @@
 import { PublicPageShell } from "@/components/shared/PublicPageShell";
 import { BackToHomeLink } from "@/components/shared/BackToHomeLink";
 import { PublicEmptyState } from "@/components/shared/PublicEmptyState";
+import { PaginationNav } from "@/components/shared/PaginationNav";
 import { GaleriaGrid } from "@/components/galeria/GaleriaGrid";
 import { NAV_ICONS } from "@/lib/nav-icons";
-import { getGalleryMedia } from "@/lib/content";
+import { getGalleryMediaPaginated } from "@/lib/content";
+import { parsePaginationParams } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +15,13 @@ export const metadata = {
     "Fotos y videos de actividades, comunidad e infraestructura del Instituto Las Violetas.",
 };
 
-export default async function GaleriaPage() {
-  const items = await getGalleryMedia();
+type PageProps = {
+  searchParams: Promise<{ page?: string; limit?: string }>;
+};
+
+export default async function GaleriaPage({ searchParams }: PageProps) {
+  const params = parsePaginationParams(await searchParams);
+  const { items, meta } = await getGalleryMediaPaginated(params);
 
   return (
     <PublicPageShell>
@@ -29,7 +36,7 @@ export default async function GaleriaPage() {
           </p>
         </header>
 
-        {items.length === 0 ? (
+        {meta.total === 0 ? (
           <PublicEmptyState
             icon={NAV_ICONS.galeria}
             message="Próximamente se publicarán registros multimedia de nuestras actividades institucionales."
@@ -37,6 +44,7 @@ export default async function GaleriaPage() {
         ) : (
           <div className="mt-10">
             <GaleriaGrid items={items} />
+            <PaginationNav basePath="/galeria" meta={meta} />
           </div>
         )}
       </div>

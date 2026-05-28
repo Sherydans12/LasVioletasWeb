@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const includeDocs = searchParams.get("include") === "documentos";
+
   try {
     const categorias = await prisma.categoriaDocumento.findMany({
       orderBy: [{ orden: "asc" }, { nombre: "asc" }],
-      include: { _count: { select: { documentos: true } } },
+      include: includeDocs
+        ? { documentos: { orderBy: { fecha: "desc" } } }
+        : { _count: { select: { documentos: true } } },
     });
     return NextResponse.json(categorias);
   } catch {

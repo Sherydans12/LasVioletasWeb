@@ -33,8 +33,9 @@ const RULES: Record<
     mimes: new Set([
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ]),
-    extensions: new Set([".pdf", ".docx"]),
+    extensions: new Set([".pdf", ".docx", ".xlsx"]),
   },
 };
 
@@ -64,6 +65,8 @@ function resolveExtension(
     "application/pdf": ".pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
       ".docx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+      ".xlsx",
   };
 
   const fromMime = mimeToExt[mimeType];

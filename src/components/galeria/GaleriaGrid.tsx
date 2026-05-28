@@ -3,12 +3,14 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { Media } from "@prisma/client";
+import { MediaPreviewLightbox } from "@/components/admin/MediaPreviewLightbox";
 import { fadeInUp, staggerContainerFast, VIEWPORT_ONCE } from "@/lib/animations";
 
 type Filter = "all" | "image" | "video";
 
 export function GaleriaGrid({ items }: { items: Media[] }) {
   const [filter, setFilter] = useState<Filter>("all");
+  const [previewItem, setPreviewItem] = useState<Media | null>(null);
 
   const filtered = useMemo(() => {
     if (filter === "all") return items;
@@ -23,6 +25,12 @@ export function GaleriaGrid({ items }: { items: Media[] }) {
 
   return (
     <>
+      <MediaPreviewLightbox
+        item={previewItem}
+        onClose={() => setPreviewItem(null)}
+        variant="public"
+      />
+
       <div
         className="flex flex-wrap gap-2 mb-10"
         role="tablist"
@@ -61,23 +69,36 @@ export function GaleriaGrid({ items }: { items: Media[] }) {
           {filtered.map((item) => (
             <motion.figure
               key={item.id}
+              role="button"
+              tabIndex={0}
               variants={fadeInUp}
-              className="flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-school-neutral p-2 shadow-sm"
+              onClick={() => setPreviewItem(item)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setPreviewItem(item);
+                }
+              }}
+              className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl border border-border/50 bg-school-neutral shadow-sm transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
             >
               {item.tipo === "video" ? (
                 <video
                   src={item.url}
-                  controls
-                  className="max-h-[480px] max-w-full h-auto w-full"
+                  className="aspect-square h-full w-full object-cover"
+                  muted
+                  playsInline
                 />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={item.url}
                   alt=""
-                  className="max-h-[480px] max-w-full h-auto w-full object-contain"
+                  className="aspect-square h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
                 />
               )}
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/50 to-transparent py-3 text-center text-xs font-medium text-white/90 opacity-0 transition-opacity group-hover:opacity-100">
+                Ver en pantalla completa
+              </span>
             </motion.figure>
           ))}
         </motion.div>

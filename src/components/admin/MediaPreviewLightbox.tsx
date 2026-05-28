@@ -9,9 +9,19 @@ import type { Media } from "@prisma/client";
 type MediaPreviewLightboxProps = {
   item: Media | null;
   onClose: () => void;
+  /** `public` usa fondo más oscuro para la galería del sitio. */
+  variant?: "admin" | "public";
 };
 
-export function MediaPreviewLightbox({ item, onClose }: MediaPreviewLightboxProps) {
+export function MediaPreviewLightbox({
+  item,
+  onClose,
+  variant = "admin",
+}: MediaPreviewLightboxProps) {
+  const backdropClass =
+    variant === "public"
+      ? "bg-black/95"
+      : "bg-black/70 backdrop-blur-sm";
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -45,7 +55,7 @@ export function MediaPreviewLightbox({ item, onClose }: MediaPreviewLightboxProp
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className={`absolute inset-0 ${backdropClass}`}
             onClick={onClose}
             aria-label="Cerrar vista previa"
           />

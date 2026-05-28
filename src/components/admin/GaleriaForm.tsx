@@ -75,6 +75,13 @@ export function GaleriaForm() {
             "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
           )}
         />
+        <p className="text-xs text-muted-foreground mt-1">
+          Fotos: resolución recomendada 1200×630px (~19:9). WEBP, PNG, JPG. Máx.
+          10MB.
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Videos: 1920×1080px (16:9). Formato MP4. Máx. 50MB.
+        </p>
         {selectedFile && (
           <p className="text-xs text-muted-foreground truncate">
             Seleccionado: {selectedFile.name}

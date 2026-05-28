@@ -74,6 +74,8 @@ const EXT_TO_MIME: Record<string, string> = {
   ".pdf": "application/pdf",
   ".docx":
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".xlsx":
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 };
 
 export function contentTypeFromFilename(filename: string): string {

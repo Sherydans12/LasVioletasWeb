@@ -2,16 +2,28 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Noticia } from "@prisma/client";
 import { AdminFormField } from "@/components/admin/AdminFormField";
 import { adminFieldClass, adminInputBase } from "@/lib/admin-form-styles";
+import { toDateInputValue } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
-export function NoticiaForm() {
+type NoticiaFormProps = {
+  noticia?: Noticia;
+  mode?: "create" | "edit";
+};
+
+export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [fileKey, setFileKey] = useState(0);
+  const isEdit = mode === "edit" && noticia;
+
+  const defaultFecha = noticia
+    ? toDateInputValue(noticia.fecha)
+    : toDateInputValue(new Date());
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -22,22 +34,34 @@ export function NoticiaForm() {
     if (!form) return;
 
     const data = new FormData(form);
+    const url = isEdit ? `/api/noticias/${noticia.id}` : "/api/noticias";
+    const method = isEdit ? "PATCH" : "POST";
 
     try {
-      const res = await fetch("/api/noticias", {
-        method: "POST",
-        body: data,
-      });
+      const res = await fetch(url, { method, body: data });
       if (!res.ok) {
         const err = (await res.json()) as { error?: string };
-        throw new Error(err.error ?? "Error al publicar");
+        throw new Error(err.error ?? "Error al guardar");
       }
-      if (formRef.current) {
-        formRef.current.reset();
+
+      if (!isEdit) {
+        if (formRef.current) {
+          formRef.current.reset();
+        }
+        setFileKey((k) => k + 1);
       }
-      setFileKey((k) => k + 1);
-      setMessage("Noticia publicada. Las imágenes se sincronizaron con la galería.");
-      router.refresh();
+
+      setMessage(
+        isEdit
+          ? "Noticia actualizada correctamente."
+          : "Noticia publicada. Las imágenes se sincronizaron con la galería."
+      );
+
+      if (isEdit) {
+        router.push("/admin/noticias");
+      } else {
+        router.refresh();
+      }
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -58,14 +82,21 @@ export function NoticiaForm() {
         validate={(v) => v.trim().length >= 3}
         inputProps={{
           placeholder: "Ej. Jornada de matrícula abierta",
+          defaultValue: noticia?.titulo ?? "",
         }}
       />
 
       <AdminFormField
-        label="Fecha"
+        label="Fecha de publicación"
         name="fecha"
         as="input"
-        inputProps={{ type: "date" }}
+        required
+        hint="Elige la fecha histórica o actual que debe mostrarse en el sitio."
+        inputProps={{
+          type: "date",
+          required: true,
+          defaultValue: defaultFecha,
+        }}
       />
 
       <AdminFormField
@@ -77,12 +108,13 @@ export function NoticiaForm() {
         inputProps={{
           rows: 8,
           placeholder: "Escribe el detalle de la actividad o noticia...",
+          defaultValue: noticia?.contenido ?? "",
         }}
       />
 
       <div className="space-y-2">
         <label htmlFor="portada" className="block text-sm font-medium">
-          Imagen de portada
+          Imagen de portada {isEdit && "(opcional, reemplaza la actual)"}
         </label>
         <input
           key={`portada-${fileKey}`}
@@ -90,13 +122,20 @@ export function NoticiaForm() {
           name="portada"
           type="file"
           accept="image/*"
-          className={cn(adminFieldClass("idle", adminInputBase), "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet")}
+          className={cn(
+            adminFieldClass("idle", adminInputBase),
+            "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
+          )}
         />
+        <p className="text-xs text-muted-foreground mt-1">
+          Resolución recomendada: 1200×630px (relación ~19:9). Formatos: WEBP,
+          PNG, JPG. Máx. 10MB.
+        </p>
       </div>
 
       <div className="space-y-2">
         <label htmlFor="imagenes" className="block text-sm font-medium">
-          Imágenes adicionales (galería automática)
+          Imágenes o videos adicionales
         </label>
         <input
           key={`imagenes-${fileKey}`}
@@ -105,13 +144,22 @@ export function NoticiaForm() {
           type="file"
           accept="image/*,video/*"
           multiple
-          className={cn(adminFieldClass("idle", adminInputBase), "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet")}
+          className={cn(
+            adminFieldClass("idle", adminInputBase),
+            "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
+          )}
         />
-        <p className="text-xs text-muted-foreground text-pretty">
-          Los archivos adjuntos se copian también a la galería general con origen
-          &quot;noticia&quot;.
+        <p className="text-xs text-muted-foreground mt-1">
+          Fotos: 1200×630px recomendado. Videos: 1920×1080px (16:9), MP4, máx.
+          50MB. Se sincronizan con la galería global.
         </p>
       </div>
+
+      {isEdit && noticia?.portadaUrl && (
+        <p className="text-xs text-muted-foreground">
+          Portada actual registrada en el sistema.
+        </p>
+      )}
 
       {message && (
         <p
@@ -122,13 +170,28 @@ export function NoticiaForm() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-school-violet text-white text-sm font-semibold hover:bg-school-violet/90 disabled:opacity-60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
-      >
-        {loading ? "Publicando…" : "Publicar noticia"}
-      </button>
+      <div className="flex flex-wrap gap-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-school-violet text-white text-sm font-semibold hover:bg-school-violet/90 disabled:opacity-60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
+        >
+          {loading
+            ? "Guardando…"
+            : isEdit
+              ? "Guardar cambios"
+              : "Publicar noticia"}
+        </button>
+        {isEdit && (
+          <button
+            type="button"
+            onClick={() => router.push("/admin/noticias")}
+            className="px-6 py-3 rounded-lg border border-border text-sm font-medium hover:bg-school-neutral transition-colors"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }
