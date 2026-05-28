@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { StorageQuotaError } from "@/lib/storage";
+import { StorageQuotaError, STORAGE_QUOTA_ERROR_MESSAGE } from "@/lib/storage";
 import { UploadValidationError } from "@/lib/uploads";
 
 export function storageQuotaResponse() {
   return NextResponse.json(
-    { error: "Espacio de almacenamiento contratado insuficiente" },
+    { error: STORAGE_QUOTA_ERROR_MESSAGE },
     { status: 403 }
   );
 }

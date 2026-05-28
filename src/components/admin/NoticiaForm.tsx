@@ -4,24 +4,63 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Noticia } from "@prisma/client";
 import { AdminFormField } from "@/components/admin/AdminFormField";
+import {
+  SelectedFileInfo,
+  SelectedFilesInfo,
+} from "@/components/admin/SelectedFileInfo";
+import {
+  isAdminFormErrorMessage,
+  StorageUploadBlockedBanner,
+} from "@/components/admin/StorageUploadBlockedBanner";
 import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import { adminFieldClass, adminInputBase } from "@/lib/admin-form-styles";
 import { toDateInputValue } from "@/lib/date-utils";
+import type { StorageQuotaInfo } from "@/lib/storage-quota";
+import {
+  parseUploadErrorResponse,
+  validateUploadAgainstStorage,
+} from "@/lib/upload-form-utils";
 import { cn } from "@/lib/utils";
 
 type NoticiaFormProps = {
   noticia?: Noticia;
   mode?: "create" | "edit";
+  storage: StorageQuotaInfo;
 };
 
-export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
+function pendingUploadBytes(form: HTMLFormElement): number {
+  let total = 0;
+
+  const portada = form.elements.namedItem("portada");
+  if (portada instanceof HTMLInputElement && portada.files?.[0]) {
+    total += portada.files[0].size;
+  }
+
+  const imagenes = form.elements.namedItem("imagenes");
+  if (imagenes instanceof HTMLInputElement && imagenes.files) {
+    for (const file of imagenes.files) {
+      total += file.size;
+    }
+  }
+
+  return total;
+}
+
+export function NoticiaForm({
+  noticia,
+  mode = "create",
+  storage,
+}: NoticiaFormProps) {
   const router = useRouter();
   const { refreshAdminPage } = useAdminPageRefresh();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [fileKey, setFileKey] = useState(0);
+  const [portadaFile, setPortadaFile] = useState<File | null>(null);
+  const [imagenesFiles, setImagenesFiles] = useState<File[]>([]);
   const isEdit = mode === "edit" && noticia;
+  const uploadsDisabled = storage.uploadsBlocked;
 
   const defaultFecha = noticia
     ? toDateInputValue(noticia.fecha)
@@ -35,6 +74,16 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
     const form = formRef.current;
     if (!form) return;
 
+    const pendingBytes = pendingUploadBytes(form);
+    if (pendingBytes > 0) {
+      const storageError = validateUploadAgainstStorage(pendingBytes, storage);
+      if (storageError) {
+        setMessage(storageError);
+        setLoading(false);
+        return;
+      }
+    }
+
     const data = new FormData(form);
     const url = isEdit ? `/api/noticias/${noticia.id}` : "/api/noticias";
     const method = isEdit ? "PATCH" : "POST";
@@ -42,8 +91,9 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
     try {
       const res = await fetch(url, { method, body: data });
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        throw new Error(err.error ?? "Error al guardar");
+        throw new Error(
+          await parseUploadErrorResponse(res, "Error al guardar")
+        );
       }
 
       if (!isEdit) {
@@ -51,6 +101,8 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
           formRef.current.reset();
         }
         setFileKey((k) => k + 1);
+        setPortadaFile(null);
+        setImagenesFiles([]);
       }
 
       setMessage(
@@ -78,6 +130,8 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
       onSubmit={onSubmit}
       className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6 lg:p-8 space-y-6 max-w-2xl"
     >
+      <StorageUploadBlockedBanner storage={storage} />
+
       <AdminFormField
         label="Título"
         name="titulo"
@@ -125,15 +179,18 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
           name="portada"
           type="file"
           accept="image/*"
+          disabled={uploadsDisabled}
+          onChange={(e) => setPortadaFile(e.target.files?.[0] ?? null)}
           className={cn(
             adminFieldClass("idle", adminInputBase),
-            "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
+            "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet disabled:opacity-60"
           )}
         />
         <p className="text-xs text-muted-foreground mt-1">
           Resolución recomendada: 1200×630px (relación ~19:9). Formatos: WEBP,
           PNG, JPG. Máx. 10MB.
         </p>
+        <SelectedFileInfo file={portadaFile} />
       </div>
 
       <div className="space-y-2">
@@ -147,15 +204,20 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
           type="file"
           accept="image/*,video/*"
           multiple
+          disabled={uploadsDisabled}
+          onChange={(e) =>
+            setImagenesFiles(Array.from(e.target.files ?? []))
+          }
           className={cn(
             adminFieldClass("idle", adminInputBase),
-            "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
+            "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet disabled:opacity-60"
           )}
         />
         <p className="text-xs text-muted-foreground mt-1">
           Fotos: 1200×630px recomendado. Videos: 1920×1080px (16:9), MP4, máx.
           50MB. Se sincronizan con la galería global.
         </p>
+        <SelectedFilesInfo files={imagenesFiles} />
       </div>
 
       {isEdit && noticia?.portadaUrl && (
@@ -166,7 +228,7 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
 
       {message && (
         <p
-          className={`text-sm ${message.includes("Error") || message.includes("error") ? "text-destructive" : "text-school-violet"}`}
+          className={`text-sm ${isAdminFormErrorMessage(message) ? "text-destructive" : "text-school-violet"}`}
           role="status"
         >
           {message}

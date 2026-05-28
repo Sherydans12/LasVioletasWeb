@@ -3,6 +3,7 @@ import { AdminNoticiasList } from "@/components/admin/AdminNoticiasList";
 import { NoticiaForm } from "@/components/admin/NoticiaForm";
 import { parsePaginationParams, buildPaginationMeta } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
+import { getStorageStats } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ type PageProps = {
 export default async function AdminNoticiasPage({ searchParams }: PageProps) {
   const resolved = await searchParams;
   const pagination = parsePaginationParams(resolved);
+  const storage = await getStorageStats();
 
   let noticias: Awaited<ReturnType<typeof prisma.noticia.findMany>> = [];
   let meta = buildPaginationMeta(0, pagination.page, pagination.limit);
@@ -35,7 +37,7 @@ export default async function AdminNoticiasPage({ searchParams }: PageProps) {
   return (
     <AdminShell title="Noticias y actividades">
       <div className="grid lg:grid-cols-[1fr_320px] gap-10 items-start">
-        <NoticiaForm />
+        <NoticiaForm storage={storage} />
         <aside className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6 space-y-4">
           <h2 className="font-heading font-semibold">Publicadas</h2>
           <AdminNoticiasList noticias={noticias} meta={meta} />

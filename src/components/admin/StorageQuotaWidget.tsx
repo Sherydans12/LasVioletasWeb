@@ -5,8 +5,12 @@ import { HardDrive } from "lucide-react";
 export async function StorageQuotaWidget() {
   const stats = await getStorageStats();
   const usedDisplay = formatStorageUsedDisplay(stats);
-  const isCritical = stats.percentUsed >= 90;
+  const isCritical = stats.isCritical;
   const availablePercent = (100 - stats.percentUsed).toFixed(1);
+  const availableDisplay =
+    stats.availableGb < 0.01
+      ? `${(stats.availableBytes / (1024 * 1024)).toFixed(0)} MB`
+      : `${stats.availableGb.toFixed(2)} GB`;
 
   return (
     <aside
@@ -59,8 +63,8 @@ export async function StorageQuotaWidget() {
         }`}
       >
         {isCritical
-          ? "Espacio crítico: libera archivos o contacta soporte antes de nuevas subidas."
-          : `${availablePercent}% disponible para noticias, galería y documentos.`}
+          ? `Espacio crítico: quedan ${availableDisplay} libres. Las subidas están bloqueadas hasta liberar espacio.`
+          : `${availablePercent}% disponible (${availableDisplay} libres) para noticias, galería y documentos.`}
       </p>
     </aside>
   );

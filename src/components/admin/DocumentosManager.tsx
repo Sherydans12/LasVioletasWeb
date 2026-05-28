@@ -4,12 +4,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CategoriaDocumento, Documento } from "@prisma/client";
 import { AdminFormField } from "@/components/admin/AdminFormField";
 import { DocumentosFolderTree } from "@/components/admin/DocumentosFolderTree";
+import { SelectedFileInfo } from "@/components/admin/SelectedFileInfo";
+import {
+  isAdminFormErrorMessage,
+  StorageUploadBlockedBanner,
+} from "@/components/admin/StorageUploadBlockedBanner";
 import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import {
   adminFieldClass,
   adminInputBase,
   adminSelectBase,
 } from "@/lib/admin-form-styles";
+import type { StorageQuotaInfo } from "@/lib/storage-quota";
+import {
+  parseUploadErrorResponse,
+  validateUploadAgainstStorage,
+} from "@/lib/upload-form-utils";
 import { cn } from "@/lib/utils";
 
 type CategoriaWithDocs = CategoriaDocumento & {
@@ -19,10 +29,12 @@ type CategoriaWithDocs = CategoriaDocumento & {
 
 type DocumentosManagerProps = {
   initialCategorias?: CategoriaWithDocs[];
+  storage: StorageQuotaInfo;
 };
 
 export function DocumentosManager({
   initialCategorias = [],
+  storage,
 }: DocumentosManagerProps) {
   const { refreshAdminPage } = useAdminPageRefresh();
   const uploadFormRef = useRef<HTMLFormElement>(null);
@@ -34,6 +46,7 @@ export function DocumentosManager({
   const [message, setMessage] = useState<string | null>(null);
   const [fileKey, setFileKey] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const uploadsDisabled = storage.uploadsBlocked;
 
   const loadCategorias = useCallback(async () => {
     const res = await fetch("/api/documentos/categorias?include=documentos");
@@ -95,6 +108,8 @@ export function DocumentosManager({
 
   async function subirDocumento(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (uploadsDisabled) return;
+
     if (!categoriaId) {
       setMessage("Selecciona o crea una categoría primero.");
       return;
@@ -108,9 +123,22 @@ export function DocumentosManager({
     const data = new FormData(form);
     data.set("categoriaId", categoriaId);
 
+    const file = data.get("archivo");
+    const fileSize = file instanceof File ? file.size : 0;
+    const storageError = validateUploadAgainstStorage(fileSize, storage);
+    if (storageError) {
+      setMessage(storageError);
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/documentos", { method: "POST", body: data });
-      if (!res.ok) throw new Error("Error al subir archivo");
+      if (!res.ok) {
+        throw new Error(
+          await parseUploadErrorResponse(res, "Error al subir archivo")
+        );
+      }
       clearUploadForm();
       setMessage("Documento publicado.");
       await refreshAdminPage(loadCategorias);
@@ -164,6 +192,8 @@ export function DocumentosManager({
         >
           <h2 className="font-heading font-semibold text-lg text-balance">Subir documento</h2>
 
+          <StorageUploadBlockedBanner storage={storage} />
+
           <div className="space-y-2">
             <label htmlFor="categoriaId" className="block text-sm font-medium">
               Carpeta <span className="text-school-gold">*</span>
@@ -172,6 +202,7 @@ export function DocumentosManager({
               id="categoriaId"
               value={categoriaId}
               onChange={(e) => setCategoriaId(e.target.value)}
+              disabled={uploadsDisabled}
               className={adminFieldClass(
                 categoriaId ? "valid" : "idle",
                 adminSelectBase
@@ -203,26 +234,23 @@ export function DocumentosManager({
               name="archivo"
               type="file"
               accept=".pdf,.doc,.docx,.xlsx,application/pdf"
-              required
+              required={!uploadsDisabled}
+              disabled={uploadsDisabled}
               onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
               className={cn(
                 adminFieldClass("idle", adminInputBase),
-                "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
+                "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet disabled:opacity-60"
               )}
             />
             <p className="text-xs text-muted-foreground mt-1">
               Formatos admitidos: PDF, DOCX, XLSX. Máx. 20MB.
             </p>
-            {selectedFile && (
-              <p className="text-xs text-muted-foreground truncate">
-                Seleccionado: {selectedFile.name}
-              </p>
-            )}
+            <SelectedFileInfo file={selectedFile} />
           </div>
 
           {message && (
             <p
-              className={`text-sm ${message.includes("Error") ? "text-destructive" : "text-school-violet"}`}
+              className={`text-sm ${isAdminFormErrorMessage(message) ? "text-destructive" : "text-school-violet"}`}
               role="status"
             >
               {message}
@@ -231,10 +259,14 @@ export function DocumentosManager({
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploadsDisabled}
             className="px-6 py-3 rounded-lg bg-school-violet text-white text-sm font-semibold hover:bg-school-violet/90 disabled:opacity-60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
           >
-            {loading ? "Subiendo…" : "Publicar documento"}
+            {uploadsDisabled
+              ? "Subidas bloqueadas"
+              : loading
+                ? "Subiendo…"
+                : "Publicar documento"}
           </button>
         </form>
       </div>

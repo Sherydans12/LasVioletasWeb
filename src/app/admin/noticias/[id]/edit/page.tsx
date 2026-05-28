@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { NoticiaForm } from "@/components/admin/NoticiaForm";
 import { getNoticiaById } from "@/lib/content";
+import { getStorageStats } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,10 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function EditNoticiaPage({ params }: PageProps) {
   const { id } = await params;
-  const noticia = await getNoticiaById(id);
+  const [noticia, storage] = await Promise.all([
+    getNoticiaById(id),
+    getStorageStats(),
+  ]);
   if (!noticia) notFound();
 
   return (
@@ -21,7 +25,7 @@ export default async function EditNoticiaPage({ params }: PageProps) {
       >
         ← Volver a noticias
       </Link>
-      <NoticiaForm noticia={noticia} mode="edit" />
+      <NoticiaForm noticia={noticia} mode="edit" storage={storage} />
     </AdminShell>
   );
 }

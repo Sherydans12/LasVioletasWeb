@@ -7,6 +7,7 @@ import { PaginationNav } from "@/components/shared/PaginationNav";
 import { buildMediaAdminWhere } from "@/lib/galeria-filters";
 import { parsePaginationParams, buildPaginationMeta } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
+import { getStorageStats } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export default async function AdminGaleriaPage({ searchParams }: PageProps) {
   const resolved = await searchParams;
   const pagination = parsePaginationParams(resolved);
   const where = buildMediaAdminWhere(resolved.q, resolved.type);
+  const storage = await getStorageStats();
 
   const filterQuery: Record<string, string | undefined> = {
     q: resolved.q?.trim() || undefined,
@@ -54,7 +56,7 @@ export default async function AdminGaleriaPage({ searchParams }: PageProps) {
   return (
     <AdminShell title="Galería multimedia">
       <section aria-label="Subir archivos">
-        <GaleriaForm />
+        <GaleriaForm storage={storage} />
       </section>
 
       <div
