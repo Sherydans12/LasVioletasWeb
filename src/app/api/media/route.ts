@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { MediaTipo } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
+import { handleUploadRouteError } from "@/lib/api-errors";
 import { inferMediaTipo, saveUpload } from "@/lib/uploads";
 
 export async function GET(request: Request) {
@@ -50,14 +51,12 @@ export async function POST(request: Request) {
         tipo,
         origen: "directo",
         destacado,
+        tamanoBytes: saved.size,
       },
     });
 
     return NextResponse.json(media, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Error al subir a la galería" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return handleUploadRouteError(err);
   }
 }

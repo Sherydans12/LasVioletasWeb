@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/auth";
 import type { ReactNode } from "react";
+import { StorageQuotaWidget } from "@/components/admin/StorageQuotaWidget";
 
 const LINKS = [
   { href: "/admin", label: "Panel" },
@@ -61,7 +62,14 @@ export function AdminShell({
           </Link>
         </nav>
       </header>
-      <main className="max-w-6xl mx-auto px-6 py-10">{children}</main>
+      <main className="max-w-6xl mx-auto px-6 py-10">
+        <div className="grid lg:grid-cols-[minmax(0,280px)_1fr] gap-8 items-start">
+          <aside className="lg:sticky lg:top-8 space-y-6">
+            <StorageQuotaWidget />
+          </aside>
+          <div className="min-w-0">{children}</div>
+        </div>
+      </main>
     </div>
   );
 }

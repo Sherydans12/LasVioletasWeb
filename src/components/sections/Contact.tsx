@@ -14,6 +14,7 @@ import {
 } from "@/lib/animations";
 import { CONTACT } from "@/lib/contact";
 import { GoogleMaps } from "@/components/shared/GoogleMaps";
+import { TurnstileField } from "@/components/shared/TurnstileField";
 
 const CONTACT_INFO = [
   {
@@ -54,6 +55,7 @@ export function Contact() {
   const [form, setForm] = useState<ContactFormData>(INITIAL_FORM);
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -67,14 +69,28 @@ export function Contact() {
     setStatus("loading");
     setErrorMessage("");
 
-    const result = await submitContact(form);
+    if (!turnstileToken) {
+      setStatus("error");
+      setErrorMessage("Completa la verificación de seguridad antes de enviar.");
+      return;
+    }
+
+    const result = await submitContact({
+      ...form,
+      turnstileToken,
+    });
 
     if (result.error) {
       setStatus("error");
-      setErrorMessage("Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.");
+      setErrorMessage(
+        result.error === "Verificación de seguridad fallida"
+          ? "La verificación de seguridad no fue válida. Intenta nuevamente."
+          : "Hubo un error al enviar el mensaje. Por favor, intenta nuevamente."
+      );
     } else {
       setStatus("success");
       setForm(INITIAL_FORM);
+      setTurnstileToken("");
     }
   };
 
@@ -276,6 +292,11 @@ export function Contact() {
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-school-violet/30 focus:border-school-violet transition-colors resize-none"
                   />
                 </div>
+
+                <TurnstileField
+                  onToken={setTurnstileToken}
+                  onExpire={() => setTurnstileToken("")}
+                />
 
                 {status === "error" && (
                   <p role="alert" aria-live="assertive" className="text-sm text-destructive">

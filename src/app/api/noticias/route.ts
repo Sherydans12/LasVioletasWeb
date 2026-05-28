@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
-import { saveUpload } from "@/lib/uploads";
+import { handleUploadRouteError } from "@/lib/api-errors";
 import { syncMediaFromNoticia } from "@/lib/media-sync";
+import { assertStorageQuota } from "@/lib/storage";
+import { saveUpload } from "@/lib/uploads";
 
 export async function GET() {
   try {
@@ -36,37 +38,43 @@ export async function POST(request: Request) {
       );
     }
 
-    const imagenUrls: string[] = [];
+    const pendingFiles: File[] = [];
     const portada = form.get("portada");
-    if (portada instanceof File && portada.size > 0) {
-      const saved = await saveUpload(portada, "noticias");
-      imagenUrls.push(saved.url);
+    if (portada instanceof File && portada.size > 0) pendingFiles.push(portada);
+
+    for (const file of form.getAll("imagenes")) {
+      if (file instanceof File && file.size > 0) pendingFiles.push(file);
     }
 
-    const adjuntos = form.getAll("imagenes");
-    for (const file of adjuntos) {
-      if (file instanceof File && file.size > 0) {
-        const saved = await saveUpload(file, "noticias");
-        imagenUrls.push(saved.url);
-      }
+    const totalBytes = pendingFiles.reduce((sum, f) => sum + f.size, 0);
+    await assertStorageQuota(totalBytes);
+
+    const mediaItems: { url: string; tamanoBytes: number }[] = [];
+
+    for (const file of pendingFiles) {
+      const saved = await saveUpload(file, "noticias");
+      mediaItems.push({ url: saved.url, tamanoBytes: saved.size });
     }
 
+    const imagenUrls = mediaItems.map((m) => m.url);
     const portadaUrl = imagenUrls[0] ?? null;
-    const imagenes = imagenUrls;
 
     const noticia = await prisma.$transaction(async (tx) => {
       const created = await tx.noticia.create({
-        data: { titulo, contenido, fecha, portadaUrl, imagenes },
+        data: {
+          titulo,
+          contenido,
+          fecha,
+          portadaUrl,
+          imagenes: imagenUrls,
+        },
       });
-      await syncMediaFromNoticia(created.id, imagenes, tx);
+      await syncMediaFromNoticia(created.id, mediaItems, tx);
       return created;
     });
 
     return NextResponse.json(noticia, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Error al crear la noticia" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return handleUploadRouteError(err);
   }
 }

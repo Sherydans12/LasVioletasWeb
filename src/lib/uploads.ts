@@ -1,36 +1,138 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import { assertStorageQuota } from "@/lib/storage";
 
-const VIDEO_EXT = new Set([".mp4", ".webm", ".mov", ".ogg"]);
+export class UploadValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UploadValidationError";
+  }
+}
+
+type UploadCategory = "noticias" | "galeria" | "documentos";
+
+const RULES: Record<
+  UploadCategory,
+  { mimes: Set<string>; extensions: Set<string> }
+> = {
+  noticias: {
+    mimes: new Set(["image/jpeg", "image/png", "image/webp", "video/mp4"]),
+    extensions: new Set([".jpg", ".jpeg", ".png", ".webp", ".mp4"]),
+  },
+  galeria: {
+    mimes: new Set(["image/jpeg", "image/png", "image/webp", "video/mp4"]),
+    extensions: new Set([".jpg", ".jpeg", ".png", ".webp", ".mp4"]),
+  },
+  documentos: {
+    mimes: new Set([
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]),
+    extensions: new Set([".pdf", ".docx"]),
+  },
+};
+
+function safeBasename(filename: string): string {
+  const base = path.basename(filename.replace(/\\/g, "/"));
+  if (base.includes("..") || base.includes("/") || base.includes("\0")) {
+    throw new UploadValidationError("Nombre de archivo no permitido");
+  }
+  return base;
+}
+
+function resolveExtension(
+  filename: string,
+  mimeType: string,
+  category: UploadCategory
+): string {
+  const rules = RULES[category];
+  const fromName = path.extname(safeBasename(filename)).toLowerCase();
+
+  if (fromName && rules.extensions.has(fromName)) return fromName;
+
+  const mimeToExt: Record<string, string> = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "video/mp4": ".mp4",
+    "application/pdf": ".pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      ".docx",
+  };
+
+  const fromMime = mimeToExt[mimeType];
+  if (fromMime && rules.extensions.has(fromMime)) return fromMime;
+
+  throw new UploadValidationError(
+    "Tipo de archivo no permitido para esta sección"
+  );
+}
+
+function validateFile(file: File, category: UploadCategory) {
+  const rules = RULES[category];
+  const ext = path.extname(safeBasename(file.name)).toLowerCase();
+
+  if (!rules.extensions.has(ext)) {
+    throw new UploadValidationError(
+      `Extensión no permitida. Permitidas: ${[...rules.extensions].join(", ")}`
+    );
+  }
+
+  const mime = (file.type || "").toLowerCase();
+  if (mime && !rules.mimes.has(mime)) {
+    throw new UploadValidationError("Tipo MIME no permitido");
+  }
+}
 
 export function inferMediaTipo(filename: string): "image" | "video" {
   const ext = path.extname(filename).toLowerCase();
-  return VIDEO_EXT.has(ext) ? "video" : "image";
+  return ext === ".mp4" ? "video" : "image";
 }
 
 export async function saveUpload(
   file: File,
-  subdir: "noticias" | "galeria" | "documentos"
+  category: UploadCategory
 ): Promise<{ url: string; size: number; mimeType: string }> {
+  if (file.size <= 0) {
+    throw new UploadValidationError("Archivo vacío");
+  }
+
+  validateFile(file, category);
+  await assertStorageQuota(file.size);
+
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  const ext = path.extname(file.name) || "";
+  const mimeType = (file.type || "application/octet-stream").toLowerCase();
+  const ext = resolveExtension(file.name, mimeType, category);
   const filename = `${randomUUID()}${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", subdir);
 
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), buffer);
+  const uploadsRoot = path.resolve(process.cwd(), "public", "uploads");
+  const targetDir = path.resolve(uploadsRoot, category);
+
+  if (!targetDir.startsWith(uploadsRoot)) {
+    throw new UploadValidationError("Ruta de destino inválida");
+  }
+
+  await mkdir(targetDir, { recursive: true });
+
+  const targetPath = path.resolve(targetDir, filename);
+  if (!targetPath.startsWith(targetDir)) {
+    throw new UploadValidationError("Ruta de archivo inválida");
+  }
+
+  await writeFile(targetPath, buffer);
 
   return {
-    url: `/uploads/${subdir}/${filename}`,
+    url: `/uploads/${category}/${filename}`,
     size: buffer.byteLength,
-    mimeType: file.type || "application/octet-stream",
+    mimeType,
   };
 }
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 ** 3) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 }

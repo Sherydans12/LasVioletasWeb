@@ -15,6 +15,7 @@ export interface ContactFormData {
   email: string;
   phone?: string;
   message: string;
+  turnstileToken?: string;
 }
 
 export interface ApiResponse<T = unknown> {

@@ -37,6 +37,7 @@ model Media {
   tipo        MediaTipo
   origen      MediaOrigen
   asociadoAId String?
+  tamanoBytes Int         @default(0)
   destacado   Boolean     @default(false)
   fecha       DateTime    @default(now())
   noticia     Noticia?    @relation(fields: [asociadoAId], references: [id], onDelete: SetNull)

@@ -44,7 +44,16 @@ async function request<T>(
     const res = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
     if (!res.ok) {
       const text = await res.text().catch(() => res.statusText);
-      return { data: null, error: text, status: res.status };
+      try {
+        const parsed = JSON.parse(text) as { error?: string };
+        return {
+          data: null,
+          error: parsed.error ?? text,
+          status: res.status,
+        };
+      } catch {
+        return { data: null, error: text, status: res.status };
+      }
     }
     const data = (await res.json()) as T;
     return { data, error: null, status: res.status };

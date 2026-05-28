@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
+export const dynamic = "force-dynamic";
 
 const MODULES = [
   {
@@ -22,7 +23,7 @@ const MODULES = [
 export default function AdminDashboardPage() {
   return (
     <AdminShell title="Panel principal">
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-2 gap-6">
         {MODULES.map((mod) => (
           <Link
             key={mod.href}

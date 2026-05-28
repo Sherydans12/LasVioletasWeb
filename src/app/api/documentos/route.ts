@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
+import { handleUploadRouteError } from "@/lib/api-errors";
 import { saveUpload } from "@/lib/uploads";
 
 export async function POST(request: Request) {
@@ -32,10 +33,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(documento, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Error al subir el documento" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return handleUploadRouteError(err);
   }
 }

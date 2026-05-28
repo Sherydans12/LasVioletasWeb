@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { TurnstileField } from "@/components/shared/TurnstileField";
 
 function LoginForm() {
   const router = useRouter();
@@ -12,23 +13,33 @@ function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/admin";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    if (!turnstileToken) {
+      setError("Completa la verificación de seguridad antes de continuar.");
+      setLoading(false);
+      return;
+    }
+
     const form = new FormData(e.currentTarget);
     const result = await signIn("credentials", {
       email: String(form.get("email")),
       password: String(form.get("password")),
+      turnstileToken,
       redirect: false,
     });
 
     setLoading(false);
 
     if (result?.error) {
-      setError("Credenciales incorrectas. Verifica tu correo y contraseña.");
+      setError(
+        "Acceso denegado. Verifica tus credenciales y la verificación de seguridad."
+      );
       return;
     }
 
@@ -86,6 +97,8 @@ function LoginForm() {
           className="w-full rounded-lg border border-border px-4 py-3 text-sm"
         />
       </div>
+
+      <TurnstileField onToken={setTurnstileToken} onExpire={() => setTurnstileToken("")} />
 
       {error && (
         <p className="text-sm text-destructive" role="alert">
