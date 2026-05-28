@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
+import { HIDDEN_LOGIN_PATH } from "@/lib/auth-routes";
 import { rateLimit, pruneRateLimitBuckets } from "@/lib/rate-limit";
 
 /** Rutas antiguas eliminadas: no deben ser descubribles. */
@@ -35,6 +36,14 @@ export default auth((req) => {
 
   const { pathname } = req.nextUrl;
 
+  if (
+    req.auth &&
+    (pathname === HIDDEN_LOGIN_PATH ||
+      pathname.startsWith(`${HIDDEN_LOGIN_PATH}/`))
+  ) {
+    return NextResponse.redirect(new URL("/admin", req.url));
+  }
+
   for (const legacy of LEGACY_LOGIN_PATHS) {
     if (pathname === legacy || pathname.startsWith(`${legacy}/`)) {
       return NextResponse.redirect(new URL("/", req.url));
@@ -59,6 +68,7 @@ export default auth((req) => {
 export const config = {
   matcher: [
     "/admin/:path*",
+    "/acceso-privado",
     "/api/auth/:path*",
     "/api/noticias",
     "/api/media",
