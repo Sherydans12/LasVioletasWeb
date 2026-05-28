@@ -3,8 +3,8 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { rateLimit, pruneRateLimitBuckets } from "@/lib/rate-limit";
 
-/** Ruta antigua eliminada: no debe ser descubrible. */
-const LEGACY_LOGIN_PATH = "/login";
+/** Rutas antiguas eliminadas: no deben ser descubribles. */
+const LEGACY_LOGIN_PATHS = ["/login", "/gestion-violetas"] as const;
 
 const UPLOAD_POST_PATHS = new Set([
   "/api/noticias",
@@ -35,8 +35,10 @@ export default auth((req) => {
 
   const { pathname } = req.nextUrl;
 
-  if (pathname === LEGACY_LOGIN_PATH || pathname.startsWith(`${LEGACY_LOGIN_PATH}/`)) {
-    return NextResponse.redirect(new URL("/", req.url));
+  for (const legacy of LEGACY_LOGIN_PATHS) {
+    if (pathname === legacy || pathname.startsWith(`${legacy}/`)) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
   }
 
   const ip = clientIp(req);
