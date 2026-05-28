@@ -1,0 +1,3 @@
+# Protocolo de Habilidades del Proyecto
+- Antes de escribir código, consulta OBLIGATORIAMENTE los archivos de directivas en `.cursor/skills/`.
+- Aplica las reglas de `ui-ux-pro-max.skill.md` para componentes visuales y `code-reviewer.skill.md` para validaciones de TypeScript y seguridad.
