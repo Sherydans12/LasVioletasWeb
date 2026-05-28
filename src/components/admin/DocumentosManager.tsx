@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { CategoriaDocumento, Documento } from "@prisma/client";
 import { AdminFormField } from "@/components/admin/AdminFormField";
 import { DocumentosFolderTree } from "@/components/admin/DocumentosFolderTree";
+import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import {
   adminFieldClass,
   adminInputBase,
@@ -24,7 +24,7 @@ type DocumentosManagerProps = {
 export function DocumentosManager({
   initialCategorias = [],
 }: DocumentosManagerProps) {
-  const router = useRouter();
+  const { refreshAdminPage } = useAdminPageRefresh();
   const uploadFormRef = useRef<HTMLFormElement>(null);
   const [categorias, setCategorias] = useState<CategoriaWithDocs[]>(initialCategorias);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
@@ -43,6 +43,10 @@ export function DocumentosManager({
       if (!categoriaId && data[0]) setCategoriaId(data[0].id);
     }
   }, [categoriaId]);
+
+  useEffect(() => {
+    setCategorias(initialCategorias);
+  }, [initialCategorias]);
 
   useEffect(() => {
     if (initialCategorias.length === 0) {
@@ -81,8 +85,7 @@ export function DocumentosManager({
       if (!res.ok) throw new Error("No se pudo crear la carpeta");
       setNuevaCategoria("");
       setCategoriaTouched(false);
-      await loadCategorias();
-      router.refresh();
+      await refreshAdminPage(loadCategorias);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     } finally {
@@ -110,8 +113,7 @@ export function DocumentosManager({
       if (!res.ok) throw new Error("Error al subir archivo");
       clearUploadForm();
       setMessage("Documento publicado.");
-      await loadCategorias();
-      router.refresh();
+      await refreshAdminPage(loadCategorias);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     } finally {
@@ -247,7 +249,10 @@ export function DocumentosManager({
         >
           Carpetas y archivos
         </h2>
-        <DocumentosFolderTree categorias={categorias} />
+        <DocumentosFolderTree
+          categorias={categorias}
+          onMutated={loadCategorias}
+        />
       </section>
     </div>
   );

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Noticia } from "@prisma/client";
 import { AdminFormField } from "@/components/admin/AdminFormField";
+import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import { adminFieldClass, adminInputBase } from "@/lib/admin-form-styles";
 import { toDateInputValue } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ type NoticiaFormProps = {
 
 export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
   const router = useRouter();
+  const { refreshAdminPage } = useAdminPageRefresh();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -58,9 +60,10 @@ export function NoticiaForm({ noticia, mode = "create" }: NoticiaFormProps) {
       );
 
       if (isEdit) {
+        await refreshAdminPage();
         router.push("/admin/noticias");
       } else {
-        router.refresh();
+        await refreshAdminPage();
       }
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error desconocido");

@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/api-auth";
@@ -36,6 +37,11 @@ export async function POST(request: Request) {
     const categoria = await prisma.categoriaDocumento.create({
       data: { nombre, orden: body.orden ?? 0 },
     });
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/documentos");
+    revalidatePath("/documentos");
+
     return NextResponse.json(categoria, { status: 201 });
   } catch {
     return NextResponse.json(

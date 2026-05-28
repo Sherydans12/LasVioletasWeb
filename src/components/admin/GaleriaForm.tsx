@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AdminFormField } from "@/components/admin/AdminFormField";
+import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import { adminFieldClass, adminInputBase } from "@/lib/admin-form-styles";
 import { cn } from "@/lib/utils";
 
 export function GaleriaForm() {
-  const router = useRouter();
+  const { refreshAdminPage } = useAdminPageRefresh();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export function GaleriaForm() {
 
       clearFileState();
       setMessage("Archivo agregado a la galería.");
-      router.refresh();
+      await refreshAdminPage();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     } finally {

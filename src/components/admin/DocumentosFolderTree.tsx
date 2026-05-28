@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ChevronDown, ChevronRight, Folder, Trash2 } from "lucide-react";
 import type { CategoriaDocumento, Documento } from "@prisma/client";
 import { deleteDocumento } from "@/app/admin/documentos/actions";
 import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
+import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import { formatFileSize } from "@/lib/file-utils";
 import { cn } from "@/lib/utils";
 
@@ -24,15 +24,16 @@ function fileExtension(url: string, mimeType: string | null): string {
 
 export function DocumentosFolderTree({
   categorias,
+  onMutated,
 }: {
   categorias: CategoriaWithDocs[];
+  onMutated?: () => void | Promise<void>;
 }) {
-  const router = useRouter();
+  const { refreshAdminPage } = useAdminPageRefresh();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<Documento | null>(null);
-  const [, startTransition] = useTransition();
 
   function toggleFolder(id: string) {
     setExpanded((prev) => {
@@ -56,10 +57,8 @@ export function DocumentosFolderTree({
     }
 
     setConfirmTarget(null);
-    startTransition(() => {
-      router.refresh();
-      setPendingId(null);
-    });
+    await refreshAdminPage(onMutated);
+    setPendingId(null);
   }
 
   if (categorias.length === 0) {

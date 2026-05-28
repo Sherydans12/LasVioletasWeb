@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
 import type { Media } from "@prisma/client";
 import { deleteMedia } from "@/app/admin/galeria/actions";
 import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
 import { MediaPreviewLightbox } from "@/components/admin/MediaPreviewLightbox";
+import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import { cn } from "@/lib/utils";
 
 function displayNameFromUrl(url: string): string {
@@ -16,12 +16,11 @@ function displayNameFromUrl(url: string): string {
 }
 
 export function GaleriaMediaGrid({ items }: { items: Media[] }) {
-  const router = useRouter();
+  const { refreshAdminPage } = useAdminPageRefresh();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Media | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<Media | null>(null);
-  const [, startTransition] = useTransition();
 
   async function handleConfirmDelete() {
     if (!confirmTarget) return;
@@ -37,10 +36,8 @@ export function GaleriaMediaGrid({ items }: { items: Media[] }) {
     }
 
     setConfirmTarget(null);
-    startTransition(() => {
-      router.refresh();
-      setPendingId(null);
-    });
+    await refreshAdminPage();
+    setPendingId(null);
   }
 
   if (items.length === 0) {

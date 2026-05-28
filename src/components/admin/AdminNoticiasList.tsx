@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import type { Noticia } from "@prisma/client";
 import { deleteNoticia } from "@/app/admin/noticias/actions";
 import { ConfirmDeleteDialog } from "@/components/admin/ConfirmDeleteDialog";
 import { PaginationNav } from "@/components/shared/PaginationNav";
+import { useAdminPageRefresh } from "@/hooks/useAdminPageRefresh";
 import type { PaginationMeta } from "@/lib/pagination";
 type AdminNoticiasListProps = {
   noticias: Noticia[];
@@ -15,11 +15,10 @@ type AdminNoticiasListProps = {
 };
 
 export function AdminNoticiasList({ noticias, meta }: AdminNoticiasListProps) {
-  const router = useRouter();
+  const { refreshAdminPage } = useAdminPageRefresh();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<Noticia | null>(null);
-  const [, startTransition] = useTransition();
 
   async function handleConfirmDelete() {
     if (!confirmTarget) return;
@@ -34,10 +33,8 @@ export function AdminNoticiasList({ noticias, meta }: AdminNoticiasListProps) {
     }
 
     setConfirmTarget(null);
-    startTransition(() => {
-      router.refresh();
-      setPendingId(null);
-    });
+    await refreshAdminPage();
+    setPendingId(null);
   }
 
   if (noticias.length === 0) {
