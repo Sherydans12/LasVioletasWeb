@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AdminFormField } from "@/components/admin/AdminFormField";
+import { adminFieldClass, adminInputBase } from "@/lib/admin-form-styles";
+import { cn } from "@/lib/utils";
 
 export function NoticiaForm() {
   const router = useRouter();
@@ -38,49 +41,39 @@ export function NoticiaForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="bg-background rounded-2xl border border-border/60 p-6 lg:p-8 space-y-6 max-w-2xl"
+      className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6 lg:p-8 space-y-6 max-w-2xl"
     >
-      <div>
-        <label htmlFor="titulo" className="block text-sm font-medium mb-2">
-          Título
-        </label>
-        <input
-          id="titulo"
-          name="titulo"
-          required
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-school-gold/50"
-          placeholder="Ej. Jornada de matrícula abierta"
-        />
-      </div>
+      <AdminFormField
+        label="Título"
+        name="titulo"
+        required
+        validate={(v) => v.trim().length >= 3}
+        inputProps={{
+          placeholder: "Ej. Jornada de matrícula abierta",
+        }}
+      />
 
-      <div>
-        <label htmlFor="fecha" className="block text-sm font-medium mb-2">
-          Fecha
-        </label>
-        <input
-          id="fecha"
-          name="fecha"
-          type="date"
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm"
-        />
-      </div>
+      <AdminFormField
+        label="Fecha"
+        name="fecha"
+        as="input"
+        inputProps={{ type: "date" }}
+      />
 
-      <div>
-        <label htmlFor="contenido" className="block text-sm font-medium mb-2">
-          Contenido
-        </label>
-        <textarea
-          id="contenido"
-          name="contenido"
-          required
-          rows={8}
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm leading-relaxed resize-y min-h-[160px] focus:outline-none focus:ring-2 focus:ring-school-gold/50"
-          placeholder="Escribe el detalle de la actividad o noticia..."
-        />
-      </div>
+      <AdminFormField
+        label="Contenido"
+        name="contenido"
+        as="textarea"
+        required
+        validate={(v) => v.trim().length >= 10}
+        inputProps={{
+          rows: 8,
+          placeholder: "Escribe el detalle de la actividad o noticia...",
+        }}
+      />
 
-      <div>
-        <label htmlFor="portada" className="block text-sm font-medium mb-2">
+      <div className="space-y-2">
+        <label htmlFor="portada" className="block text-sm font-medium">
           Imagen de portada
         </label>
         <input
@@ -88,12 +81,12 @@ export function NoticiaForm() {
           name="portada"
           type="file"
           accept="image/*"
-          className="w-full text-sm"
+          className={cn(adminFieldClass("idle", adminInputBase), "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet")}
         />
       </div>
 
-      <div>
-        <label htmlFor="imagenes" className="block text-sm font-medium mb-2">
+      <div className="space-y-2">
+        <label htmlFor="imagenes" className="block text-sm font-medium">
           Imágenes adicionales (galería automática)
         </label>
         <input
@@ -102,9 +95,9 @@ export function NoticiaForm() {
           type="file"
           accept="image/*,video/*"
           multiple
-          className="w-full text-sm"
+          className={cn(adminFieldClass("idle", adminInputBase), "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet")}
         />
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="text-xs text-muted-foreground text-pretty">
           Los archivos adjuntos se copian también a la galería general con origen
           &quot;noticia&quot;.
         </p>
@@ -122,7 +115,7 @@ export function NoticiaForm() {
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-school-violet text-white text-sm font-semibold hover:bg-school-violet/90 disabled:opacity-60 transition-colors"
+        className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-school-violet text-white text-sm font-semibold hover:bg-school-violet/90 disabled:opacity-60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
       >
         {loading ? "Publicando…" : "Publicar noticia"}
       </button>

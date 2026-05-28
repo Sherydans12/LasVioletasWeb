@@ -5,46 +5,61 @@ import { HardDrive } from "lucide-react";
 export async function StorageQuotaWidget() {
   const stats = await getStorageStats();
   const isCritical = stats.percentUsed >= 90;
+  const availablePercent = (100 - stats.percentUsed).toFixed(1);
 
   return (
     <aside
-      className="rounded-2xl border border-border/60 bg-background p-6 shadow-sm"
+      className="rounded-2xl border border-school-violet/10 bg-school-neutral/80 p-5 shadow-sm"
       aria-labelledby="storage-quota-heading"
     >
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-school-violet/10 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-school-violet/10 flex items-center justify-center shrink-0">
           <HardDrive size={20} className="text-school-violet" aria-hidden />
         </div>
-        <div>
+        <div className="min-w-0">
           <h2
             id="storage-quota-heading"
-            className="font-heading font-semibold text-base text-foreground"
+            className="font-heading font-semibold text-sm text-foreground leading-tight"
           >
             Almacenamiento VPS
           </h2>
-          <p className="text-xs text-muted-foreground">
-            Plan contratado: {stats.limitGb.toFixed(0)} GB
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Plan {stats.limitGb.toFixed(0)} GB contratado
           </p>
         </div>
       </div>
 
-      <p
-        className={`text-sm font-medium mb-3 ${isCritical ? "text-destructive" : "text-foreground"}`}
-      >
-        {stats.usedGb.toFixed(2)} GB utilizados de {stats.limitGb.toFixed(0)} GB
-      </p>
+      <div className="mb-3">
+        <p
+          className={`text-lg font-heading font-bold tabular-nums tracking-tight ${
+            isCritical ? "text-destructive" : "text-foreground"
+          }`}
+        >
+          {stats.usedGb.toFixed(2)}
+          <span className="text-sm font-normal text-muted-foreground">
+            {" "}
+            / {stats.limitGb.toFixed(0)} GB
+          </span>
+        </p>
+        <p className="text-xs text-muted-foreground mt-0.5">espacio utilizado</p>
+      </div>
 
       <Progress
         value={stats.percentUsed}
+        className="h-2"
         indicatorClassName={
           isCritical ? "bg-destructive" : "bg-school-gold"
         }
       />
 
-      <p className="text-xs text-muted-foreground mt-3">
+      <p
+        className={`text-xs mt-3 leading-relaxed text-pretty ${
+          isCritical ? "text-destructive/90 font-medium" : "text-muted-foreground"
+        }`}
+      >
         {isCritical
           ? "Espacio crítico: libera archivos o contacta soporte antes de nuevas subidas."
-          : `${(100 - stats.percentUsed).toFixed(1)}% disponible para noticias, galería y documentos.`}
+          : `${availablePercent}% disponible para noticias, galería y documentos.`}
       </p>
     </aside>
   );

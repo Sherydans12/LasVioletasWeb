@@ -96,13 +96,13 @@ export function Services() {
           <motion.h2
             id="services-heading"
             variants={fadeInUp}
-            className="text-(length:--text-4xl) font-heading font-bold leading-[1.15] tracking-[-0.02em] text-foreground mb-4"
+            className="text-(length:--text-4xl) font-heading font-bold leading-[1.15] tracking-[-0.02em] text-foreground mb-4 text-balance"
           >
             Formación diseñada para ti
           </motion.h2>
           <motion.p
             variants={fadeInUp}
-            className="text-(length:--text-lg) text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            className="text-(length:--text-lg) text-muted-foreground max-w-2xl mx-auto leading-relaxed text-pretty"
           >
             Cada propuesta formativa está concebida para enriquecer el
             desarrollo personal y profesional de nuestros estudiantes adultos.
@@ -120,7 +120,7 @@ export function Services() {
             <motion.article
               key={service.id}
               variants={scaleIn}
-              className="group bg-background rounded-2xl p-6 lg:p-8 border border-border/60 hover:border-school-gold/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              className="group bg-white rounded-2xl p-6 lg:p-8 border border-school-violet/10 shadow-sm hover:border-school-gold/35 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
             >
               <div
                 className="w-11 h-11 rounded-xl bg-school-violet/10 flex items-center justify-center mb-5 group-hover:bg-school-violet/20 transition-colors duration-300"
@@ -128,10 +128,10 @@ export function Services() {
               >
                 <service.Icon size={22} className="text-school-violet" />
               </div>
-              <h3 className="text-base font-semibold text-foreground mb-2 tracking-[-0.01em]">
+              <h3 className="text-base font-semibold text-foreground mb-2 tracking-[-0.01em] text-balance">
                 {service.title}
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
                 {service.description}
               </p>
             </motion.article>
@@ -170,7 +170,7 @@ export function Services() {
                 >
                   {PIE_SERVICE.title}
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
                   {PIE_SERVICE.description}
                 </p>
               </div>

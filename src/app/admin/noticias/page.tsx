@@ -19,7 +19,7 @@ export default async function AdminNoticiasPage() {
     <AdminShell title="Noticias y actividades">
       <div className="grid lg:grid-cols-[1fr_320px] gap-10 items-start">
         <NoticiaForm />
-        <aside className="bg-background rounded-2xl border border-border/60 p-6">
+        <aside className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6">
           <h2 className="font-heading font-semibold mb-4">Publicadas recientemente</h2>
           {noticias.length === 0 ? (
             <p className="text-sm text-muted-foreground">

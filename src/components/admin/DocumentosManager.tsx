@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AdminFormField } from "@/components/admin/AdminFormField";
+import {
+  adminFieldClass,
+  adminInputBase,
+  adminSelectBase,
+} from "@/lib/admin-form-styles";
+import { cn } from "@/lib/utils";
 
 type Categoria = {
   id: string;
@@ -14,6 +21,7 @@ export function DocumentosManager() {
   const router = useRouter();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
+  const [categoriaTouched, setCategoriaTouched] = useState(false);
   const [categoriaId, setCategoriaId] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -31,9 +39,17 @@ export function DocumentosManager() {
     void loadCategorias();
   }, [loadCategorias]);
 
+  const categoriaNombreValid = nuevaCategoria.trim().length >= 2;
+  const categoriaFieldState = !categoriaTouched
+    ? "idle"
+    : categoriaNombreValid
+      ? "valid"
+      : "invalid";
+
   async function crearCategoria(e: React.FormEvent) {
     e.preventDefault();
-    if (!nuevaCategoria.trim()) return;
+    setCategoriaTouched(true);
+    if (!categoriaNombreValid) return;
     setLoading(true);
     try {
       const res = await fetch("/api/documentos/categorias", {
@@ -43,6 +59,7 @@ export function DocumentosManager() {
       });
       if (!res.ok) throw new Error("No se pudo crear la carpeta");
       setNuevaCategoria("");
+      setCategoriaTouched(false);
       await loadCategorias();
       router.refresh();
     } catch (err) {
@@ -80,19 +97,32 @@ export function DocumentosManager() {
     <div className="grid lg:grid-cols-2 gap-8">
       <form
         onSubmit={crearCategoria}
-        className="bg-background rounded-2xl border border-border/60 p-6 space-y-4"
+        className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6 space-y-4"
       >
-        <h2 className="font-heading font-semibold text-lg">Nueva carpeta</h2>
-        <input
-          value={nuevaCategoria}
-          onChange={(e) => setNuevaCategoria(e.target.value)}
-          placeholder="Nombre de la sección (ej. Reglamentos)"
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm"
-        />
+        <h2 className="font-heading font-semibold text-lg text-balance">Nueva carpeta</h2>
+        <div className="space-y-2">
+          <label htmlFor="nueva-categoria" className="block text-sm font-medium">
+            Nombre de la sección
+          </label>
+          <input
+            id="nueva-categoria"
+            value={nuevaCategoria}
+            onChange={(e) => setNuevaCategoria(e.target.value)}
+            onBlur={() => setCategoriaTouched(true)}
+            placeholder="Ej. Reglamentos"
+            className={adminFieldClass(categoriaFieldState, adminInputBase)}
+            aria-invalid={categoriaTouched && !categoriaNombreValid}
+          />
+          {categoriaTouched && !categoriaNombreValid && (
+            <p className="text-xs text-destructive/90" role="alert">
+              El nombre debe tener al menos 2 caracteres.
+            </p>
+          )}
+        </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 rounded-lg bg-school-gold text-school-violet text-sm font-semibold"
+          className="px-4 py-2 rounded-lg bg-school-gold text-school-violet text-sm font-semibold hover:bg-school-gold-light disabled:opacity-60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
         >
           Crear categoría
         </button>
@@ -100,7 +130,7 @@ export function DocumentosManager() {
           {categorias.map((c) => (
             <li key={c.id} className="flex justify-between text-muted-foreground">
               <span>{c.nombre}</span>
-              <span>{c._count?.documentos ?? 0} archivos</span>
+              <span className="tabular-nums">{c._count?.documentos ?? 0} archivos</span>
             </li>
           ))}
         </ul>
@@ -108,18 +138,22 @@ export function DocumentosManager() {
 
       <form
         onSubmit={subirDocumento}
-        className="bg-background rounded-2xl border border-border/60 p-6 space-y-4"
+        className="bg-background rounded-2xl border border-school-violet/10 shadow-sm p-6 space-y-4"
       >
-        <h2 className="font-heading font-semibold text-lg">Subir documento</h2>
-        <div>
-          <label htmlFor="categoriaId" className="block text-sm font-medium mb-2">
-            Carpeta
+        <h2 className="font-heading font-semibold text-lg text-balance">Subir documento</h2>
+
+        <div className="space-y-2">
+          <label htmlFor="categoriaId" className="block text-sm font-medium">
+            Carpeta <span className="text-school-gold">*</span>
           </label>
           <select
             id="categoriaId"
             value={categoriaId}
             onChange={(e) => setCategoriaId(e.target.value)}
-            className="w-full rounded-lg border border-border px-4 py-2 text-sm"
+            className={adminFieldClass(
+              categoriaId ? "valid" : "idle",
+              adminSelectBase
+            )}
           >
             <option value="">Seleccionar…</option>
             {categorias.map((c) => (
@@ -129,35 +163,44 @@ export function DocumentosManager() {
             ))}
           </select>
         </div>
-        <div>
-          <label htmlFor="nombre" className="block text-sm font-medium mb-2">
-            Nombre visible
+
+        <AdminFormField
+          label="Nombre visible"
+          name="nombre"
+          validate={(v) => v.trim().length === 0 || v.trim().length >= 2}
+          inputProps={{ placeholder: "Ej. Reglamento interno 2026" }}
+        />
+
+        <div className="space-y-2">
+          <label htmlFor="doc-archivo" className="block text-sm font-medium">
+            Archivo (PDF, Word…) <span className="text-school-gold">*</span>
           </label>
           <input
-            id="nombre"
-            name="nombre"
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm"
-            placeholder="Ej. Reglamento interno 2026"
-          />
-        </div>
-        <div>
-          <label htmlFor="archivo" className="block text-sm font-medium mb-2">
-            Archivo (PDF, Word…)
-          </label>
-          <input
-            id="archivo"
+            id="doc-archivo"
             name="archivo"
             type="file"
             accept=".pdf,.doc,.docx,application/pdf,application/msword"
             required
-            className="w-full text-sm"
+            className={cn(
+              adminFieldClass("idle", adminInputBase),
+              "py-2.5 file:mr-4 file:rounded-md file:border-0 file:bg-school-violet/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-school-violet"
+            )}
           />
         </div>
-        {message && <p className="text-sm text-school-violet">{message}</p>}
+
+        {message && (
+          <p
+            className={`text-sm ${message.includes("Error") ? "text-destructive" : "text-school-violet"}`}
+            role="status"
+          >
+            {message}
+          </p>
+        )}
+
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-3 rounded-lg bg-school-violet text-white text-sm font-semibold disabled:opacity-60"
+          className="px-6 py-3 rounded-lg bg-school-violet text-white text-sm font-semibold hover:bg-school-violet/90 disabled:opacity-60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-school-gold"
         >
           {loading ? "Subiendo…" : "Publicar documento"}
         </button>
